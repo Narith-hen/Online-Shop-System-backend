@@ -16,8 +16,11 @@ class CategoryController extends Controller
         if ($request->filled('search')) {
             $search = $request->search;
             $query->where(function ($q) use ($search) {
-                $q->where('name', 'like', "%{$search}%")
-                  ->orWhere('description', 'like', "%{$search}%");
+                $q->where('id', 'like', "%{$search}%")
+                  ->orWhere('name', 'like', "%{$search}%")
+                  ->orWhere('description', 'like', "%{$search}%")
+                  ->orWhereRaw("CASE WHEN is_active = 1 THEN 'active' ELSE 'inactive' END LIKE ?", ["%{$search}%"])
+                  ->orWhereRaw("DATE_FORMAT(created_at, '%Y-%m-%d') LIKE ?", ["%{$search}%"]);
             });
         }
 
@@ -25,7 +28,8 @@ class CategoryController extends Controller
             $query->where('is_active', $request->status === 'active');
         }
 
-        $categories = $query->latest()->paginate(15)->withQueryString();
+        $perPage = isset($_COOKIE['per_page']) ? min(25, max(5, (int) $_COOKIE['per_page'])) : 10;
+        $categories = $query->latest()->paginate($perPage)->appends($request->except('per_page'));
         return view('admin.categories.index', compact('categories'));
     }
 

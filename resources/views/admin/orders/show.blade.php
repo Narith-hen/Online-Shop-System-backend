@@ -73,6 +73,15 @@
                     <span class="text-gray-500 text-sm">User ID</span>
                     <span class="font-semibold text-gray-900">#{{ $order->user_id }}</span>
                 </div>
+                @if($order->shipping_address)
+                <div class="border-t border-gray-100 pt-3 mt-3">
+                    <p class="text-gray-500 text-sm font-semibold mb-1">Shipping Address</p>
+                    <p class="text-sm text-gray-900">{{ $order->shipping_name ?? 'N/A' }}</p>
+                    <p class="text-sm text-gray-600">{{ $order->shipping_address }}</p>
+                    @if($order->shipping_city)<p class="text-sm text-gray-600">{{ $order->shipping_city }}{{ $order->shipping_zip ? ', '.$order->shipping_zip : '' }}</p>@endif
+                    @if($order->shipping_phone)<p class="text-sm text-gray-600">Phone: {{ $order->shipping_phone }}</p>@endif
+                </div>
+                @endif
             </div>
         </div>
 
@@ -123,6 +132,58 @@
             </div>
         </div>
     </div>
+
+    <!-- Payment Proof -->
+    @if($order->payment_proof)
+    <div class="bg-white rounded-lg shadow overflow-hidden">
+        <div class="px-6 py-4 border-b border-gray-200">
+            <h3 class="text-lg font-bold text-gray-800">Payment Proof</h3>
+        </div>
+        <div class="p-6">
+            <div class="flex flex-col md:flex-row gap-6 items-start">
+                <div class="bg-gray-50 rounded-lg p-4">
+                    <img src="{{ $order->payment_proof_url }}" alt="Payment Proof" class="w-80 h-auto object-contain rounded border border-gray-200" />
+                </div>
+                <div class="flex-1 space-y-4">
+                    <div class="flex justify-between">
+                        <span class="text-gray-500 text-sm">Payment Method</span>
+                        <span class="font-semibold text-gray-900">ABA KHQR</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-gray-500 text-sm">Payment Status</span>
+                        @if($order->payment_status === 'verified')
+                            <span class="bg-green-100 text-green-800 px-3 py-1 rounded-full text-xs font-medium">Verified</span>
+                        @elseif($order->payment_status === 'pending_verification')
+                            <span class="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-xs font-medium">Pending Verification</span>
+                        @elseif($order->payment_status === 'failed')
+                            <span class="bg-red-100 text-red-800 px-3 py-1 rounded-full text-xs font-medium">Failed</span>
+                        @else
+                            <span class="bg-yellow-100 text-yellow-800 px-3 py-1 rounded-full text-xs font-medium">{{ ucfirst($order->payment_status) }}</span>
+                        @endif
+                    </div>
+                    @if($order->payment_status === 'pending_verification')
+                    <div class="flex gap-3 pt-4">
+                        <form method="POST" action="{{ route('admin.orders.verify-payment', $order->id) }}" onsubmit="return confirm('Verify this payment?')">
+                            @csrf
+                            <input type="hidden" name="payment_status" value="verified" />
+                            <button type="submit" class="bg-green-600 hover:bg-green-700 text-white px-5 py-2 rounded-lg text-sm font-medium transition">
+                                <i class="fas fa-check mr-1"></i> Verify Payment
+                            </button>
+                        </form>
+                        <form method="POST" action="{{ route('admin.orders.verify-payment', $order->id) }}" onsubmit="return confirm('Reject this payment?')">
+                            @csrf
+                            <input type="hidden" name="payment_status" value="failed" />
+                            <button type="submit" class="bg-red-600 hover:bg-red-700 text-white px-5 py-2 rounded-lg text-sm font-medium transition">
+                                <i class="fas fa-times mr-1"></i> Reject Payment
+                            </button>
+                        </form>
+                    </div>
+                    @endif
+                </div>
+            </div>
+        </div>
+    </div>
+    @endif
 
     <!-- Order Items -->
     <div class="bg-white rounded-lg shadow overflow-hidden">
@@ -200,7 +261,7 @@
             });
             if (res.ok) {
                 showToast('Order deleted successfully.', 'success');
-                setTimeout(() => { window.location.href = '{{ route("admin.orders.index") }}'; }, 1000);
+                setTimeout(() => { if (typeof adminNavigate === 'function') { adminNavigate('{{ route("admin.orders.index") }}'); } else { window.location.href = '{{ route("admin.orders.index") }}'; } }, 1000);
             } else {
                 const d = await res.json();
                 showToast(d.message || 'Delete failed.', 'error');

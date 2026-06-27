@@ -25,6 +25,7 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
     Route::get('orders/{order}/edit', [\App\Http\Controllers\Admin\OrderController::class, 'edit'])->name('orders.edit');
     Route::put('orders/{order}', [\App\Http\Controllers\Admin\OrderController::class, 'update'])->name('orders.update');
     Route::delete('orders/{order}', [\App\Http\Controllers\Admin\OrderController::class, 'destroy'])->name('orders.destroy');
+    Route::post('orders/{order}/verify-payment', [\App\Http\Controllers\Admin\OrderController::class, 'verifyPayment'])->name('orders.verify-payment');
     Route::resource('users', \App\Http\Controllers\Admin\UserController::class);
 
     Route::get('settings', [SettingsController::class, 'index'])->name('settings.index');
@@ -42,7 +43,16 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
 // Route::put('/categories/{id}', [CategoryController::class, 'update'])->name('categories.update');
 // Route::delete('/categories/{id}', [CategoryController::class, 'destroy'])->name('categories.destroy');
 
-// Public 404 Fallback
-Route::fallback(function () {
-    return response()->view('errors.404', [], 404);
-});
+// Named login route for exception handler redirect
+Route::get('/login', function () {
+    return redirect()->away(env('FRONTEND_URL', 'http://localhost:5173') . '/login');
+})->name('login');
+
+// SPA catch-all: serve Vue frontend for non-API, non-admin routes
+Route::get('/{any?}', function () {
+    $frontendPath = public_path('dist/index.html');
+    if (file_exists($frontendPath)) {
+        return file_get_contents($frontendPath);
+    }
+    return redirect()->away(env('FRONTEND_URL', 'http://localhost:5173') . '/' . request()->path());
+})->where('any', '^(?!api|admin|storage|_debugbar|vendor|images).*$');

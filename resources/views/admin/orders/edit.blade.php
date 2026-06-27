@@ -109,7 +109,7 @@
 
             if (res.ok) {
                 showToast('Order status updated successfully.', 'success');
-                setTimeout(() => { window.location.href = '{{ route("admin.orders.index") }}'; }, 1000);
+                setTimeout(() => { if (typeof adminNavigate === 'function') { adminNavigate('{{ route("admin.orders.index") }}'); } else { window.location.href = '{{ route("admin.orders.index") }}'; } }, 1000);
             } else {
                 const data = await res.json();
                 showErrors('edit-errors', data.errors || { general: [data.message || 'Something went wrong.'] });

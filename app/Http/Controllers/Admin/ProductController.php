@@ -4,7 +4,10 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Category;
+use App\Models\Order;
+use App\Models\OrderItem;
 use App\Models\Product;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 
@@ -17,10 +20,15 @@ class ProductController extends Controller
         if ($request->filled('search')) {
             $search = $request->search;
             $query->where(function ($q) use ($search) {
-                $q->where('name', 'like', "%{$search}%")
+                $q->where('id', 'like', "%{$search}%")
+                  ->orWhere('name', 'like', "%{$search}%")
+                  ->orWhere('price', 'like', "%{$search}%")
+                  ->orWhere('stock', 'like', "%{$search}%")
                   ->orWhereHas('category', function ($q2) use ($search) {
                       $q2->where('name', 'like', "%{$search}%");
-                  });
+                  })
+                  ->orWhereRaw("CASE WHEN is_active = 1 THEN 'active' ELSE 'inactive' END LIKE ?", ["%{$search}%"])
+                  ->orWhereRaw("DATE_FORMAT(created_at, '%Y-%m-%d') LIKE ?", ["%{$search}%"]);
             });
         }
 
@@ -32,10 +40,32 @@ class ProductController extends Controller
             $query->where('is_active', $request->status === 'active');
         }
 
-        $products = $query->latest()->paginate(15)->withQueryString();
+        // Stock status filter (from card clicks)
+        if ($request->filled('stock_status')) {
+            if ($request->stock_status === 'low') {
+                $query->where('stock', '<=', 5)->where('is_active', true);
+            }
+        }
+
+        $perPage = isset($_COOKIE['per_page']) ? min(25, max(5, (int) $_COOKIE['per_page'])) : 10;
+        $products = $query->latest()->paginate($perPage)->appends($request->except('per_page'));
         $categories = Category::all();
 
-        return view('admin.products.index', compact('products', 'categories'));
+        // Stock metrics
+        $lowStockCount = Product::where('is_active', true)->where('stock', '<=', 5)->count();
+        $totalUnitsLeft = Product::where('is_active', true)->sum('stock');
+        $totalUnitsSold = OrderItem::sum('quantity');
+
+        $firstOrder = Order::orderBy('created_at')->first();
+        if ($firstOrder) {
+            $daysActive = max(1, Carbon::now()->diffInDays($firstOrder->created_at));
+            $totalRevenue = Order::where('status', 'completed')->sum('total');
+            $dailyEarnings = round($totalRevenue / $daysActive, 2);
+        } else {
+            $dailyEarnings = 0;
+        }
+
+        return view('admin.products.index', compact('products', 'categories', 'lowStockCount', 'totalUnitsLeft', 'totalUnitsSold', 'dailyEarnings'));
     }
 
     public function create()
@@ -61,6 +91,7 @@ class ProductController extends Controller
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'image_url' => 'nullable|url|max:2048',
             'price' => 'required|numeric|min:0',
             'stock' => 'required|integer|min:0',
             'category_id' => 'required|exists:categories,id',
@@ -71,6 +102,8 @@ class ProductController extends Controller
 
         if ($request->hasFile('image')) {
             $validated['image'] = $request->file('image')->store('products', 'public');
+        } elseif ($request->filled('image_url')) {
+            $validated['image'] = $request->image_url;
         }
 
         $product = Product::create($validated);
@@ -109,6 +142,7 @@ class ProductController extends Controller
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'image_url' => 'nullable|url|max:2048',
             'price' => 'required|numeric|min:0',
             'stock' => 'required|integer|min:0',
             'category_id' => 'required|exists:categories,id',
@@ -122,6 +156,8 @@ class ProductController extends Controller
                 Storage::disk('public')->delete($product->image);
             }
             $validated['image'] = $request->file('image')->store('products', 'public');
+        } elseif ($request->filled('image_url')) {
+            $validated['image'] = $request->image_url;
         }
 
         $product->update($validated);

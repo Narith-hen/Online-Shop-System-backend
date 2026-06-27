@@ -10,7 +10,7 @@
 
 <div class="mb-6">
     <form method="GET" action="{{ route('admin.orders.index') }}" class="flex flex-col md:flex-row gap-4">
-        <input type="text" name="search" value="{{ request('search') }}" placeholder="Search by order ID or customer..." class="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+        <input type="text" name="search" value="{{ request('search') }}" placeholder="Search ID, customer, total, status or date..." class="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
         <select name="status" class="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
             <option value="">All Status</option>
             <option value="pending" {{ request('status') === 'pending' ? 'selected' : '' }}>Pending</option>
@@ -50,7 +50,7 @@
             <thead>
                 <tr class="border-b border-gray-200 bg-gray-50">
                     <th class="text-left py-3 px-4 font-semibold text-gray-700 text-sm">Order ID</th>
-                    <th class="text-left py-3 px-4 font-semibold text-gray-700 text-sm">Customer</th>
+                    <th class="text-left py-3 px-4 font-semibold text-gray-700 text-sm hide-tablet">Customer</th>
                     <th class="text-left py-3 px-4 font-semibold text-gray-700 text-sm">Total</th>
                     <th class="text-left py-3 px-4 font-semibold text-gray-700 text-sm">Status</th>
                     <th class="text-left py-3 px-4 font-semibold text-gray-700 text-sm">Date</th>
@@ -60,8 +60,8 @@
             <tbody>
                 @forelse($orders ?? [] as $order)
                     <tr class="border-b border-gray-200 hover:bg-gray-50 transition">
-                        <td class="py-3 px-4 text-sm font-medium text-gray-900">#{{ $order->id }}</td>
-                        <td class="py-3 px-4">
+                        <td class="py-3 px-4 text-sm font-medium text-gray-500">#{{ $orders->firstItem() + $loop->index }}</td>
+                        <td class="py-3 px-4 hide-tablet">
                             <div>
                                 <p class="text-sm font-medium text-gray-900">{{ $order->customer_name ?? 'N/A' }}</p>
                                 <p class="text-xs text-gray-500">{{ $order->customer_email ?? 'N/A' }}</p>
@@ -111,7 +111,7 @@
 
     <!-- Pagination -->
     @if(isset($orders) && method_exists($orders, 'links'))
-        <div class="p-4 border-t border-gray-200">
+        <div class="bg-white p-4 border-t border-gray-200">
             {{ $orders->links() }}
         </div>
     @endif

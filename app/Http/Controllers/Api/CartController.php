@@ -19,7 +19,7 @@ class CartController extends Controller
             ->latest()
             ->get();
 
-        $subtotal = $cartItems->sum(fn ($item) => $item->product->price * $item->quantity);
+        $subtotal = $cartItems->sum(fn ($item) => ($item->product?->price ?? 0) * $item->quantity);
 
         return response()->json([
             'items' => $cartItems,
@@ -79,6 +79,10 @@ class CartController extends Controller
         ]);
 
         $product = $cartItem->product;
+
+        if (!$product || !$product->is_active) {
+            return response()->json(['message' => 'This product is no longer available.'], 422);
+        }
 
         if ($validated['quantity'] > $product->stock) {
             return response()->json(['message' => "Only {$product->stock} units available."], 422);

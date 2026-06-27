@@ -173,6 +173,16 @@ Route::middleware(['auth:sanctum', 'admin'])->prefix('admin')->group(function ()
         ->name('api.admin.products.destroy');
 
 
+    // Dashboard Stats
+    Route::get('/orders/stats', [\App\Http\Controllers\Admin\OrderController::class, 'apiStats'])
+        ->name('admin.orders.stats');
+
+    // Dashboard Charts
+    Route::get('/orders/earnings', [\App\Http\Controllers\Admin\OrderController::class, 'apiEarnings'])
+        ->name('admin.orders.earnings');
+    Route::get('/products/stats', [\App\Http\Controllers\Api\ProductController::class, 'apiStats'])
+        ->name('admin.products.stats');
+
     // Settings page
     Route::get('/settings', [SettingsController::class, 'index'])
         ->name('admin.settings');

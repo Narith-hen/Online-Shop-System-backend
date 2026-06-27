@@ -166,7 +166,7 @@
             });
             if (res.ok) {
                 showToast('User deleted successfully.', 'success');
-                setTimeout(() => { window.location.href = '{{ route("admin.users.index") }}'; }, 1000);
+                setTimeout(() => { if (typeof adminNavigate === 'function') { adminNavigate('{{ route("admin.users.index") }}'); } else { window.location.href = '{{ route("admin.users.index") }}'; } }, 1000);
             } else {
                 const d = await res.json();
                 showToast(d.message || 'Delete failed.', 'error');

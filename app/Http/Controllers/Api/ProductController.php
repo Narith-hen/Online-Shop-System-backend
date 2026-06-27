@@ -15,7 +15,7 @@ class ProductController extends Controller
      */
     public function index(Request $request)
     {
-        $query = Product::with('category');
+        $query = Product::with('category')->where('is_active', true);
 
         if ($request->filled('search')) {
             $search = $request->search;
@@ -158,5 +158,15 @@ class ProductController extends Controller
             'success' => true,
             'message' => 'Product and linked assets successfully removed.'
         ], 200);
+    }
+
+    public function apiStats()
+    {
+        $stats = Product::join('categories', 'products.category_id', '=', 'categories.id')
+            ->selectRaw('categories.name as category, COUNT(*) as count')
+            ->groupBy('categories.name')
+            ->get();
+
+        return response()->json(['success' => true, 'data' => $stats]);
     }
 }

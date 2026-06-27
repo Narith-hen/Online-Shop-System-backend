@@ -6,6 +6,7 @@ use App\Helpers\SocketHelper;
 use App\Http\Controllers\Controller;
 use App\Models\Notification;
 use App\Models\Order;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Schema;
 
@@ -27,10 +28,13 @@ class OrderController extends Controller
                 $search = $request->search;
                 $query->where(function ($q) use ($search) {
                     $q->where('id', 'like', "%{$search}%")
+                      ->orWhere('total', 'like', "%{$search}%")
+                      ->orWhere('status', 'like', "%{$search}%")
                       ->orWhereHas('user', function ($q2) use ($search) {
                           $q2->where('name', 'like', "%{$search}%")
                             ->orWhere('email', 'like', "%{$search}%");
-                      });
+                      })
+                      ->orWhereRaw("DATE_FORMAT(created_at, '%Y-%m-%d') LIKE ?", ["%{$search}%"]);
                 });
             }
 
@@ -44,7 +48,8 @@ class OrderController extends Controller
             $pendingOrders = $aggregates->pending_orders;
             $completedOrders = $aggregates->completed_orders;
             $totalRevenue = $aggregates->total_revenue ?? 0;
-            $orders = $query->latest()->paginate(10)->withQueryString();
+            $perPage = isset($_COOKIE['per_page']) ? min(25, max(5, (int) $_COOKIE['per_page'])) : 10;
+            $orders = $query->latest()->paginate($perPage)->appends($request->except('per_page'));
         }
 
         return view('admin.orders.index', [
@@ -75,6 +80,12 @@ class OrderController extends Controller
         $validated = $request->validate([
             'status' => 'required|string|in:pending,processing,shipped,completed,cancelled',
         ]);
+
+        if ($request->has('payment_status')) {
+            $validated['payment_status'] = $request->validate([
+                'payment_status' => 'required|string|in:unpaid,pending_verification,verified,failed',
+            ])['payment_status'];
+        }
 
         $oldStatus = $order->status;
         $order->update($validated);
@@ -108,6 +119,140 @@ class OrderController extends Controller
         }
 
         return redirect()->route('admin.orders.index')->with('success', 'Order status updated successfully.');
+    }
+
+    public function verifyPayment(Request $request, Order $order)
+    {
+        $validated = $request->validate([
+            'payment_status' => 'required|string|in:verified,failed',
+        ]);
+
+        $order->update($validated);
+
+        try {
+            $notif = Notification::create([
+                'title'   => 'Payment ' . ucfirst($validated['payment_status']) . ' for Order #' . $order->id,
+                'message' => $validated['payment_status'] === 'verified'
+                    ? 'Your payment for order #' . $order->id . ' has been verified.'
+                    : 'Your payment for order #' . $order->id . ' was rejected. Please contact support.',
+                'type'    => 'news',
+                'link'    => '/orders/' . $order->id . '/receipt',
+            ]);
+            $notif->reads()->attach($order->user_id, ['read_at' => null]);
+
+            SocketHelper::notification([
+                'id'         => $notif->id,
+                'title'      => $notif->title,
+                'message'    => $notif->message,
+                'type'       => $notif->type,
+                'link'       => $notif->link,
+                'created_at' => $notif->created_at->toIso8601String(),
+                'user_id'    => $order->user_id,
+            ]);
+        } catch (\Throwable $e) {
+            // Don't block verification if notification fails
+        }
+
+        if ($request->expectsJson()) {
+            return response()->json(['success' => true, 'message' => 'Payment ' . $validated['payment_status'] . ' successfully.']);
+        }
+
+        return redirect()->route('admin.orders.show', $order->id)->with('success', 'Payment ' . $validated['payment_status'] . ' successfully.');
+    }
+
+    public function apiStats()
+    {
+        if (!Schema::hasTable('orders')) {
+            return response()->json(['success' => true, 'data' => [
+                'total_orders' => 0,
+                'pending_orders' => 0,
+                'completed_orders' => 0,
+                'total_revenue' => 0,
+            ]]);
+        }
+
+        $aggregates = Order::selectRaw('COUNT(*) as total_orders, SUM(CASE WHEN status = "pending" THEN 1 ELSE 0 END) as pending_orders, SUM(CASE WHEN status = "completed" THEN 1 ELSE 0 END) as completed_orders, SUM(total) as total_revenue')->first();
+
+        return response()->json(['success' => true, 'data' => [
+            'total_orders' => $aggregates->total_orders ?? 0,
+            'pending_orders' => $aggregates->pending_orders ?? 0,
+            'completed_orders' => $aggregates->completed_orders ?? 0,
+            'total_revenue' => $aggregates->total_revenue ?? 0,
+        ]]);
+    }
+
+    public function apiEarnings()
+    {
+        if (!Schema::hasTable('orders')) {
+            return response()->json(['success' => true, 'data' => []]);
+        }
+
+        $period = request('period', 'monthly');
+        $now = Carbon::now();
+
+        switch ($period) {
+            case 'weekly':
+                $data = Order::where('status', '!=', 'cancelled')
+                    ->where('created_at', '>=', $now->copy()->subWeeks(7)->startOfWeek())
+                    ->selectRaw("YEARWEEK(created_at, 1) as period, SUM(total) as total")
+                    ->groupBy('period')
+                    ->orderBy('period')
+                    ->get()
+                    ->keyBy('period');
+
+                $labels = [];
+                $values = [];
+                for ($i = 7; $i >= 0; $i--) {
+                    $date = $now->copy()->subWeeks($i)->startOfWeek();
+                    $key = $date->isoWeekYear() . str_pad($date->isoWeek(), 2, '0', STR_PAD_LEFT);
+                    $labels[] = 'Week ' . $date->format('M d');
+                    $values[] = (float) ($data[$key]->total ?? 0);
+                }
+                break;
+
+            case 'daily':
+                $data = Order::where('status', '!=', 'cancelled')
+                    ->where('created_at', '>=', $now->copy()->subDays(13)->startOfDay())
+                    ->selectRaw("DATE(created_at) as period, SUM(total) as total")
+                    ->groupBy('period')
+                    ->orderBy('period')
+                    ->get()
+                    ->keyBy('period');
+
+                $labels = [];
+                $values = [];
+                for ($i = 13; $i >= 0; $i--) {
+                    $date = $now->copy()->subDays($i);
+                    $key = $date->format('Y-m-d');
+                    $labels[] = $date->format('D, M d');
+                    $values[] = (float) ($data[$key]->total ?? 0);
+                }
+                break;
+
+            default: // monthly
+                $data = Order::where('status', '!=', 'cancelled')
+                    ->where('created_at', '>=', $now->copy()->subMonths(6)->startOfMonth())
+                    ->selectRaw("DATE_FORMAT(created_at, '%Y-%m') as period, SUM(total) as total")
+                    ->groupBy('period')
+                    ->orderBy('period')
+                    ->get()
+                    ->keyBy('period');
+
+                $labels = [];
+                $values = [];
+                for ($i = 6; $i >= 0; $i--) {
+                    $date = $now->copy()->subMonths($i);
+                    $key = $date->format('Y-m');
+                    $labels[] = $date->format('M');
+                    $values[] = (float) ($data[$key]->total ?? 0);
+                }
+                break;
+        }
+
+        return response()->json(['success' => true, 'data' => [
+            'labels' => $labels,
+            'values' => $values,
+        ]]);
     }
 
     public function destroy(Order $order)

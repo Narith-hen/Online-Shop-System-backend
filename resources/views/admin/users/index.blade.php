@@ -24,7 +24,7 @@
         <form method="GET" action="{{ route('admin.users.index') }}" class="flex flex-wrap items-center gap-4">
             <div class="flex-1 min-w-[200px]">
                 <input type="text" name="search" value="{{ request('search') }}" 
-                       placeholder="Search by name or email..." 
+                       placeholder="Search ID, name, email, role or date..." 
                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
             </div>
             <div>
@@ -55,7 +55,7 @@
                 <tr>
                     <th class="px-6 py-4 text-left text-sm font-semibold text-gray-600">ID</th>
                     <th class="px-6 py-4 text-left text-sm font-semibold text-gray-600">User</th>
-                    <th class="px-6 py-4 text-left text-sm font-semibold text-gray-600">Email</th>
+                    <th class="px-6 py-4 text-left text-sm font-semibold text-gray-600 hide-tablet">Email</th>
                     <th class="px-6 py-4 text-left text-sm font-semibold text-gray-600">Role</th>
                     <th class="px-6 py-4 text-left text-sm font-semibold text-gray-600">Created At</th>
                     <th class="px-6 py-4 text-left text-sm font-semibold text-gray-600">Actions</th>
@@ -64,7 +64,7 @@
             <tbody id="table-body" class="divide-y divide-gray-200">
                 @forelse($users as $user)
                 <tr class="hover:bg-gray-50">
-                    <td class="px-6 py-4 text-gray-700 font-medium">{{ $user->code }}</td>
+                    <td class="px-6 py-4 text-gray-700 font-medium">#{{ $users->firstItem() + $loop->index }}</td>
                     
                     <td class="px-6 py-4">
                         <div class="flex items-center gap-3">
@@ -85,7 +85,7 @@
                         </div>
                     </td>
 
-                    <td class="px-6 py-4 text-gray-600 text-sm">
+                    <td class="px-6 py-4 text-gray-600 text-sm hide-tablet">
                         {{ $user->email }}
                         @if($user->provider)
                             <span class="ml-2 px-2 py-0.5 text-xs bg-gray-100 text-gray-600 rounded-full">
@@ -140,7 +140,7 @@
     <!-- Pagination -->
     <div id="pagination-container">
         @if($users->hasPages())
-            <div class="flex justify-end mt-4">
+            <div class="bg-white rounded-lg shadow-sm p-4 flex justify-end">
                 {{ $users->links() }}
             </div>
         @endif
@@ -304,7 +304,7 @@
             const newPag = doc.querySelector('#pagination-container');
             if (newBody) document.querySelector('#table-body').innerHTML = newBody.innerHTML;
             if (newPag) document.querySelector('#pagination-container').innerHTML = newPag.innerHTML;
-        } catch (e) { window.location.reload(); }
+        } catch (e) { console.error('refreshTable failed', e); }
     }
 
     // ============ CREATE MODAL ============
@@ -408,7 +408,6 @@
 
         const form = document.getElementById('edit-form');
         const formData = new FormData(form);
-        formData.append('_method', 'PUT');
 
         try {
             const res = await fetch(`/admin/users/${editingUserId}`, {

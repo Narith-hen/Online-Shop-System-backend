@@ -31,7 +31,12 @@ class CheckoutController extends Controller
         }
 
         $validator = Validator::make($request->all(), [
-            'payment_method' => 'required|string|in:aba,acleda',
+            'payment_method' => 'required|string|in:aba',
+            'shipping_name'    => 'nullable|string|max:255',
+            'shipping_phone'   => 'nullable|string|max:20',
+            'shipping_address' => 'nullable|string|max:500',
+            'shipping_city'    => 'nullable|string|max:255',
+            'shipping_zip'     => 'nullable|string|max:20',
         ]);
 
         if ($validator->fails()) {
@@ -44,9 +49,11 @@ class CheckoutController extends Controller
         $errors = [];
         foreach ($cartItems as $item) {
             if (! $item->product || ! $item->product->is_active) {
-                $errors[] = "'{$item->product->name}' is no longer available.";
+                $name = $item->product?->name ?? 'Unknown product';
+                $errors[] = "'{$name}' is no longer available.";
             } elseif ($item->quantity > $item->product->stock) {
-                $errors[] = "'{$item->product->name}' only has {$item->product->stock} units available.";
+                $name = $item->product->name ?? 'Unknown product';
+                $errors[] = "'{$name}' only has {$item->product->stock} units available.";
             }
         }
 
@@ -60,11 +67,16 @@ class CheckoutController extends Controller
             $total = round($subtotal + $tax, 2);
 
             $order = Order::create([
-                'user_id'        => $request->user()->id,
-                'total'          => $total,
-                'status'         => 'pending',
-                'payment_method' => $request->payment_method,
-                'payment_status' => 'unpaid',
+                'user_id'          => $request->user()->id,
+                'total'            => $total,
+                'status'           => 'pending',
+                'payment_method'   => $request->payment_method,
+                'payment_status'   => 'unpaid',
+                'shipping_name'    => $request->shipping_name,
+                'shipping_phone'   => $request->shipping_phone,
+                'shipping_address' => $request->shipping_address,
+                'shipping_city'    => $request->shipping_city,
+                'shipping_zip'     => $request->shipping_zip,
             ]);
 
             foreach ($cartItems as $item) {

@@ -164,7 +164,7 @@
             });
             if (res.ok) {
                 showToast('Category deleted successfully.', 'success');
-                setTimeout(() => { window.location.href = '{{ route("admin.categories.index") }}'; }, 1000);
+                setTimeout(() => { if (typeof adminNavigate === 'function') { adminNavigate('{{ route("admin.categories.index") }}'); } else { window.location.href = '{{ route("admin.categories.index") }}'; } }, 1000);
             } else {
                 const d = await res.json();
                 showToast(d.message || 'Delete failed.', 'error');

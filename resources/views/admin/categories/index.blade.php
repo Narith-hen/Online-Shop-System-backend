@@ -23,7 +23,7 @@
         <form method="GET" action="{{ route('admin.categories.index') }}" class="flex flex-wrap items-center gap-4">
             <div class="flex-1 min-w-[200px]">
                 <input type="text" name="search" value="{{ request('search') }}"
-                       placeholder="Search by name or description..."
+                       placeholder="Search ID, name, description, status or date..."
                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
             </div>
             <div>
@@ -50,16 +50,16 @@
                 <tr>
                     <th class="px-6 py-4 text-left text-sm font-semibold text-gray-600 w-16">ID</th>
                     <th class="px-6 py-4 text-left text-sm font-semibold text-gray-600">Name</th>
-                    <th class="px-6 py-4 text-left text-sm font-semibold text-gray-600">Description</th>
+                    <th class="px-6 py-4 text-left text-sm font-semibold text-gray-600 hide-tablet">Description</th>
                     <th class="px-6 py-4 text-left text-sm font-semibold text-gray-600">Status</th>
                     <th class="px-6 py-4 text-left text-sm font-semibold text-gray-600">Created At</th>
                     <th class="px-6 py-4 text-left text-sm font-semibold text-gray-600">Actions</th>
                 </tr>
             </thead>
             <tbody id="table-body" class="divide-y divide-gray-200">
-                @forelse($categories as $index => $category)
+                @forelse($categories as $category)
                 <tr class="hover:bg-gray-50" data-id="{{ $category->id }}">
-                    <td class="px-6 py-4 text-gray-700 font-medium">#{{ $index + 1 }}</td>
+                    <td class="px-6 py-4 text-gray-700 font-medium">#{{ $categories->firstItem() + $loop->index }}</td>
                     <td class="px-6 py-4">
                         <div class="flex items-center gap-3">
                             @if($category->image_url)
@@ -72,7 +72,7 @@
                             <span class="font-medium text-gray-800">{{ $category->name }}</span>
                         </div>
                     </td>
-                    <td class="px-6 py-4 text-gray-600 text-sm">
+                    <td class="px-6 py-4 text-gray-600 text-sm hide-tablet">
                         {{ Str::limit($category->description ?? 'No description', 80) }}
                     </td>
                     <td class="px-6 py-4">
@@ -106,7 +106,7 @@
 
     <div id="pagination-container">
         @if($categories->hasPages())
-            <div class="flex justify-end mt-4">{{ $categories->links() }}</div>
+            <div class="bg-white rounded-lg shadow-sm p-4 flex justify-end">{{ $categories->links() }}</div>
         @endif
     </div>
 
@@ -213,7 +213,7 @@ async function refreshTable() {
         const newPag = doc.querySelector('#pagination-container');
         if (newBody) document.querySelector('#table-body').innerHTML = newBody.innerHTML;
         if (newPag) document.querySelector('#pagination-container').innerHTML = newPag.innerHTML;
-    } catch (e) { window.location.reload(); }
+    } catch (e) { console.error('refreshTable failed', e); }
 }
 
 function populateParentSelect(selectId, cats, selectedId) {
@@ -228,7 +228,6 @@ async function openCreateModal() {
     document.getElementById('create-file-name').textContent = 'No file chosen';
     document.getElementById('create-preview').classList.add('hidden');
     clearErrors('create-errors');
-    try { const r = await fetch(createUrl, { headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' } }); } catch (e) {}
     showModal('create-modal');
 }
 function closeCreateModal() { hideModal('create-modal'); }
@@ -262,7 +261,7 @@ async function openEditModal(catId) {
 function closeEditModal() { hideModal('edit-modal'); editingCatId = null; }
 async function submitEditForm(e) {
     e.preventDefault(); if (!editingCatId) return; clearErrors('edit-errors');
-    const fd = new FormData(document.getElementById('edit-form')); fd.append('_method', 'PUT');
+    const fd = new FormData(document.getElementById('edit-form')); fd.append('_token', csrfToken); fd.append('_method', 'PUT');
     try {
         const res = await fetch(`/admin/categories/${editingCatId}`, { method: 'POST', headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' }, body: fd });
         if (res.ok) { closeEditModal(); showToast('Category updated successfully.', 'success'); await refreshTable(); }

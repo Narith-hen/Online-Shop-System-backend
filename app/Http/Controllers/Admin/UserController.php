@@ -16,8 +16,13 @@ class UserController extends Controller
         if ($request->filled('search')) {
             $search = $request->search;
             $query->where(function ($q) use ($search) {
-                $q->where('name', 'like', "%{$search}%")
-                  ->orWhere('email', 'like', "%{$search}%");
+                $q->where('id', 'like', "%{$search}%")
+                  ->orWhere('name', 'like', "%{$search}%")
+                  ->orWhere('email', 'like', "%{$search}%")
+                  ->orWhereHas('role', function ($q2) use ($search) {
+                      $q2->where('name', 'like', "%{$search}%");
+                  })
+                  ->orWhereRaw("DATE_FORMAT(created_at, '%Y-%m-%d') LIKE ?", ["%{$search}%"]);
             });
         }
 
@@ -27,7 +32,8 @@ class UserController extends Controller
             });
         }
 
-        $users = $query->orderBy('code')->paginate(10)->appends($request->query());
+        $perPage = isset($_COOKIE['per_page']) ? min(25, max(5, (int) $_COOKIE['per_page'])) : 10;
+        $users = $query->orderBy('code')->paginate($perPage)->appends($request->except('per_page'));
         $roles = Role::all();
 
         return view('admin.users.index', compact('users', 'roles'));

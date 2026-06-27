@@ -117,7 +117,7 @@
             });
             if (res.ok) {
                 showToast('Product deleted successfully.', 'success');
-                setTimeout(() => { window.location.href = '{{ route("admin.products.index") }}'; }, 1000);
+                setTimeout(() => { if (typeof adminNavigate === 'function') { adminNavigate('{{ route("admin.products.index") }}'); } else { window.location.href = '{{ route("admin.products.index") }}'; } }, 1000);
             } else {
                 const d = await res.json();
                 showToast(d.message || 'Delete failed.', 'error');

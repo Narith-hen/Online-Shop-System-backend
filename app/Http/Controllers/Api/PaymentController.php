@@ -12,15 +12,9 @@ class PaymentController extends Controller
         $methods = [
             [
                 'code'     => 'aba',
-                'name'     => 'ABA Bank',
+                'name'     => 'ABA KHQR',
                 'qr_url'   => $this->qrUrl('aba.png'),
                 'instructions' => 'Open ABA Mobile app → Scan QR → Pay → Upload screenshot',
-            ],
-            [
-                'code'     => 'acleda',
-                'name'     => 'ACLEDA Bank',
-                'qr_url'   => $this->qrUrl('acleda.png'),
-                'instructions' => 'Open ACLEDA Mobile app → Scan QR → Pay → Upload screenshot',
             ],
         ];
 
