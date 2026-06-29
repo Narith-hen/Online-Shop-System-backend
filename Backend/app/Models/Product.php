@@ -2,7 +2,7 @@
 
 namespace App\Models;
 
-use App\Helpers\SocketHelper;
+use App\Services\SocketService;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -102,7 +102,7 @@ applications
 
                 DB::table('notification_reads')->insertOrIgnore($pivot->toArray());
 
-                SocketHelper::notification([
+                SocketService::notification([
                     'id'         => $notif->id,
                     'title'      => $notif->title,
                     'message'    => $notif->message,

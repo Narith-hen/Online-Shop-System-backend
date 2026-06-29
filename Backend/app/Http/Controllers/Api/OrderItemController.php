@@ -8,9 +8,25 @@ use App\Models\Order;
 use App\Models\OrderItem;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use OpenApi\Attributes as OA;
 
 class OrderItemController extends Controller
 {
+    #[OA\Post(
+        path: '/api/orders/{order}/items/{item}/cancel',
+        summary: 'Cancel a pending order item',
+        security: [['sanctum' => []]],
+        tags: ['Order Items'],
+        parameters: [
+            new OA\Parameter(name: 'order', in: 'path', required: true, schema: new OA\Schema(type: 'integer')),
+            new OA\Parameter(name: 'item', in: 'path', required: true, schema: new OA\Schema(type: 'integer')),
+        ],
+        responses: [
+            new OA\Response(response: 200, description: 'Item cancelled'),
+            new OA\Response(response: 403, description: 'Forbidden'),
+            new OA\Response(response: 422, description: 'Only pending items can be cancelled'),
+        ]
+    )]
     public function cancel(Request $request, Order $order, OrderItem $item)
     {
         if ($order->user_id !== $request->user()->id) {
@@ -51,6 +67,21 @@ class OrderItemController extends Controller
         ]);
     }
 
+    #[OA\Post(
+        path: '/api/orders/{order}/items/{item}/return',
+        summary: 'Return a delivered order item',
+        security: [['sanctum' => []]],
+        tags: ['Order Items'],
+        parameters: [
+            new OA\Parameter(name: 'order', in: 'path', required: true, schema: new OA\Schema(type: 'integer')),
+            new OA\Parameter(name: 'item', in: 'path', required: true, schema: new OA\Schema(type: 'integer')),
+        ],
+        responses: [
+            new OA\Response(response: 200, description: 'Return requested'),
+            new OA\Response(response: 403, description: 'Forbidden'),
+            new OA\Response(response: 422, description: 'Only delivered items can be returned'),
+        ]
+    )]
     public function returnItem(Request $request, Order $order, OrderItem $item)
     {
         if ($order->user_id !== $request->user()->id) {
@@ -86,6 +117,21 @@ class OrderItemController extends Controller
         ]);
     }
 
+    #[OA\Post(
+        path: '/api/orders/{order}/items/{item}/reorder',
+        summary: 'Re-add an order item to the cart',
+        security: [['sanctum' => []]],
+        tags: ['Order Items'],
+        parameters: [
+            new OA\Parameter(name: 'order', in: 'path', required: true, schema: new OA\Schema(type: 'integer')),
+            new OA\Parameter(name: 'item', in: 'path', required: true, schema: new OA\Schema(type: 'integer')),
+        ],
+        responses: [
+            new OA\Response(response: 200, description: 'Item added to cart'),
+            new OA\Response(response: 403, description: 'Forbidden'),
+            new OA\Response(response: 422, description: 'Validation error'),
+        ]
+    )]
     public function reorder(Request $request, Order $order, OrderItem $item)
     {
         if ($order->user_id !== $request->user()->id) {

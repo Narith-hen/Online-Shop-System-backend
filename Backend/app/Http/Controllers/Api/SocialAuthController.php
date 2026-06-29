@@ -10,6 +10,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use Laravel\Socialite\Facades\Socialite;
+use OpenApi\Attributes as OA;
 
 class SocialAuthController extends Controller
 {
@@ -18,9 +19,18 @@ class SocialAuthController extends Controller
      */
     private const SUPPORTED_PROVIDERS = ['google', 'github'];
 
-    /**
-     * Redirect the user to the OAuth provider.
-     */
+    #[OA\Get(
+        path: '/api/auth/{provider}/redirect',
+        summary: 'Redirect to OAuth provider for authentication',
+        tags: ['Social Auth'],
+        parameters: [
+            new OA\Parameter(name: 'provider', in: 'path', required: true, schema: new OA\Schema(type: 'string', enum: ['google', 'github'])),
+        ],
+        responses: [
+            new OA\Response(response: 302, description: 'Redirect to provider'),
+            new OA\Response(response: 400, description: 'Unsupported provider'),
+        ]
+    )]
     public function redirectToProvider(string $provider)
     {
         if (!in_array($provider, self::SUPPORTED_PROVIDERS)) {
@@ -35,9 +45,18 @@ class SocialAuthController extends Controller
             ->redirect();
     }
 
-    /**
-     * Handle the OAuth provider callback.
-     */
+    #[OA\Get(
+        path: '/api/auth/{provider}/callback',
+        summary: 'Handle OAuth provider callback',
+        tags: ['Social Auth'],
+        parameters: [
+            new OA\Parameter(name: 'provider', in: 'path', required: true, schema: new OA\Schema(type: 'string', enum: ['google', 'github'])),
+        ],
+        responses: [
+            new OA\Response(response: 302, description: 'Redirect to frontend with token'),
+            new OA\Response(response: 400, description: 'Unsupported provider'),
+        ]
+    )]
     public function handleProviderCallback(string $provider)
     {
         if (!in_array($provider, self::SUPPORTED_PROVIDERS)) {
@@ -91,6 +110,12 @@ class SocialAuthController extends Controller
                 'provider_avatar' => $socialUser->getAvatar(),
                 'avatar' => $socialUser->getAvatar(), // Also store as the local avatar
             ]);
+        }
+
+        // Block blocked users from logging in via social auth
+        if ($user->is_blocked) {
+            $frontendUrl = config('app.frontend_url', env('FRONTEND_URL', 'http://localhost:5173'));
+            return redirect("{$frontendUrl}/account-blocked");
         }
 
         // Revoke old tokens and create a new one

@@ -66,13 +66,15 @@ Route::get('/payment-methods', [PaymentController::class, 'methods'])
 // SHARED AUTH ROUTES (Any Authenticated User)
 // ========================================
 
-Route::middleware('auth:sanctum')->group(function () {
+Route::middleware(['auth:sanctum', 'check.blocked'])->group(function () {
 
     // Profile & Logout (available to both admin and customer)
     Route::get('/profile', [AuthController::class, 'profile'])
         ->name('api.profile.show');
     Route::post('/profile', [AuthController::class, 'updateProfile'])
         ->name('api.profile.update');
+    Route::post('/change-password', [AuthController::class, 'changePassword'])
+        ->name('api.profile.change-password');
     Route::post('/logout', [AuthController::class, 'logout'])
         ->name('api.logout');
 
@@ -83,7 +85,7 @@ Route::middleware('auth:sanctum')->group(function () {
 // CUSTOMER-ONLY ROUTES (Auth + Customer Role Required)
 // ========================================
 
-Route::middleware(['auth:sanctum', 'customer'])->group(function () {
+Route::middleware(['auth:sanctum', 'check.blocked', 'customer'])->group(function () {
 
     // Customer Orders
     Route::get('/orders', [\App\Http\Controllers\Api\OrderController::class, 'index'])

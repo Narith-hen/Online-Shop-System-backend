@@ -18,6 +18,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'admin' => \App\Http\Middleware\AdminMiddleware::class,
             'customer' => \App\Http\Middleware\CustomerMiddleware::class,
+            'check.blocked' => \App\Http\Middleware\CheckBlocked::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
@@ -25,6 +26,6 @@ return Application::configure(basePath: dirname(__DIR__))
             if ($request->expectsJson() || $request->is('api/*')) {
                 return response()->json(['message' => 'Unauthenticated.'], 401);
             }
-            return redirect()->guest($e->redirectTo() ?? route('login'));
+            return redirect()->guest($e->redirectTo($request) ?? route('login'));
         });
     })->create();

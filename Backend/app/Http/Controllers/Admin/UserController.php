@@ -135,4 +135,41 @@ class UserController extends Controller
 
         return redirect()->route('admin.users.index')->with('success', 'User deleted successfully.');
     }
+
+    public function toggleBlock(User $user)
+    {
+        if ($user->isAdmin()) {
+            return response()->json(['success' => false, 'message' => 'Cannot block admin users.'], 403);
+        }
+
+        $user->update(['is_blocked' => !$user->is_blocked]);
+
+        $status = $user->is_blocked ? 'blocked' : 'unblocked';
+
+        if (request()->ajax() || request()->wantsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => "User {$status} successfully.",
+                'is_blocked' => $user->is_blocked,
+            ]);
+        }
+
+        return redirect()->route('admin.users.index')->with('success', "User {$status} successfully.");
+    }
+
+    public function bulkDestroy(Request $request)
+    {
+        $ids = $request->input('ids', []);
+        if (empty($ids)) {
+            return response()->json(['success' => false, 'message' => 'No items selected.'], 400);
+        }
+        $users = User::whereIn('id', $ids)->get();
+        foreach ($users as $user) {
+            if ($user->isAdmin()) {
+                continue;
+            }
+            $user->delete();
+        }
+        return response()->json(['success' => true, 'message' => 'Users deleted (admins skipped).']);
+    }
 }

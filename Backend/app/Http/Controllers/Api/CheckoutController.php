@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers\Api;
 
-use App\Helpers\SocketHelper;
+use App\Services\SocketService;
 use App\Http\Controllers\Controller;
 use App\Mail\OrderReceipt;
 use App\Models\CartItem;
@@ -14,12 +14,30 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Validator;
+use OpenApi\Attributes as OA;
 
 class CheckoutController extends Controller
 {
-    /**
-     * Place an order from the authenticated user's cart.
-     */
+    #[OA\Post(
+        path: '/api/checkout',
+        summary: 'Place an order from the user cart',
+        security: [['sanctum' => []]],
+        tags: ['Checkout'],
+        requestBody: new OA\RequestBody(required: true, content: new OA\JsonContent(
+            properties: [
+                new OA\Property(property: 'payment_method', type: 'string', enum: ['aba']),
+                new OA\Property(property: 'shipping_name', type: 'string'),
+                new OA\Property(property: 'shipping_phone', type: 'string'),
+                new OA\Property(property: 'shipping_address', type: 'string'),
+                new OA\Property(property: 'shipping_city', type: 'string'),
+                new OA\Property(property: 'shipping_zip', type: 'string'),
+            ]
+        )),
+        responses: [
+            new OA\Response(response: 201, description: 'Order placed successfully'),
+            new OA\Response(response: 422, description: 'Validation error'),
+        ]
+    )]
     public function checkout(Request $request)
     {
         $cartItems = CartItem::with('product')
@@ -117,7 +135,7 @@ class CheckoutController extends Controller
                 ->pluck('id');
             $notif->reads()->attach($adminIds->toArray(), ['read_at' => null]);
 
-            SocketHelper::notification([
+            SocketService::notification([
                 'id'         => $notif->id,
                 'title'      => $notif->title,
                 'message'    => $notif->message,
@@ -127,7 +145,7 @@ class CheckoutController extends Controller
                 'user_id'    => $request->user()->id,
             ]);
 
-            SocketHelper::push('admin-notification', [
+            SocketService::push('admin-notification', [
                 'id'         => $notif->id,
                 'title'      => 'New Order #' . $order->id,
                 'message'    => 'Customer ' . $order->user->name . ' placed an order of $' . number_format($order->total, 2),
@@ -139,7 +157,7 @@ class CheckoutController extends Controller
                 'total'      => $order->total,
             ]);
 
-            SocketHelper::cartUpdate();
+            SocketService::cartUpdate();
         } catch (\Throwable $e) {
             // Don't block order if notification fails
         }
@@ -150,9 +168,28 @@ class CheckoutController extends Controller
         ], 201);
     }
 
-    /**
-     * Upload payment proof for an order.
-     */
+    #[OA\Post(
+        path: '/api/orders/{order}/payment-proof',
+        summary: 'Upload payment proof for an order',
+        security: [['sanctum' => []]],
+        tags: ['Checkout'],
+        parameters: [
+            new OA\Parameter(name: 'order', in: 'path', required: true, schema: new OA\Schema(type: 'integer')),
+        ],
+        requestBody: new OA\RequestBody(required: true, content: new OA\MediaType(
+            mediaType: 'multipart/form-data',
+            schema: new OA\Schema(
+                properties: [
+                    new OA\Property(property: 'payment_proof', type: 'string', format: 'binary'),
+                ]
+            )
+        )),
+        responses: [
+            new OA\Response(response: 200, description: 'Payment proof uploaded'),
+            new OA\Response(response: 403, description: 'Forbidden'),
+            new OA\Response(response: 422, description: 'Validation error'),
+        ]
+    )]
     public function uploadProof(Request $request, Order $order)
     {
         if ($order->user_id !== $request->user()->id) {

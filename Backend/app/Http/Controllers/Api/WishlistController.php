@@ -6,12 +6,19 @@ use App\Http\Controllers\Controller;
 use App\Models\WishlistItem;
 use App\Models\Product;
 use Illuminate\Http\Request;
+use OpenApi\Attributes as OA;
 
 class WishlistController extends Controller
 {
-    /**
-     * Get authenticated user's wishlist with product details.
-     */
+    #[OA\Get(
+        path: '/api/wishlist',
+        summary: 'Get authenticated user wishlist',
+        security: [['sanctum' => []]],
+        tags: ['Wishlist'],
+        responses: [
+            new OA\Response(response: 200, description: 'Wishlist items'),
+        ]
+    )]
     public function index(Request $request)
     {
         $wishlistItems = WishlistItem::with('product.category')
@@ -25,9 +32,22 @@ class WishlistController extends Controller
         ]);
     }
 
-    /**
-     * Add a product to the wishlist.
-     */
+    #[OA\Post(
+        path: '/api/wishlist',
+        summary: 'Add product to wishlist',
+        security: [['sanctum' => []]],
+        tags: ['Wishlist'],
+        requestBody: new OA\RequestBody(required: true, content: new OA\JsonContent(
+            properties: [
+                new OA\Property(property: 'product_id', type: 'integer'),
+            ]
+        )),
+        responses: [
+            new OA\Response(response: 201, description: 'Added to wishlist'),
+            new OA\Response(response: 409, description: 'Already in wishlist'),
+            new OA\Response(response: 422, description: 'Validation error'),
+        ]
+    )]
     public function store(Request $request)
     {
         $validated = $request->validate([
@@ -50,9 +70,19 @@ class WishlistController extends Controller
         return response()->json(['message' => 'Added to wishlist.'], 201);
     }
 
-    /**
-     * Remove a product from the wishlist.
-     */
+    #[OA\Delete(
+        path: '/api/wishlist/{wishlistItem}',
+        summary: 'Remove product from wishlist',
+        security: [['sanctum' => []]],
+        tags: ['Wishlist'],
+        parameters: [
+            new OA\Parameter(name: 'wishlistItem', in: 'path', required: true, schema: new OA\Schema(type: 'integer')),
+        ],
+        responses: [
+            new OA\Response(response: 200, description: 'Removed from wishlist'),
+            new OA\Response(response: 403, description: 'Forbidden'),
+        ]
+    )]
     public function destroy(Request $request, WishlistItem $wishlistItem)
     {
         if ($wishlistItem->user_id !== $request->user()->id) {
@@ -64,9 +94,21 @@ class WishlistController extends Controller
         return response()->json(['message' => 'Removed from wishlist.']);
     }
 
-    /**
-     * Toggle a product in the wishlist (add or remove).
-     */
+    #[OA\Post(
+        path: '/api/wishlist/toggle',
+        summary: 'Toggle product in wishlist (add or remove)',
+        security: [['sanctum' => []]],
+        tags: ['Wishlist'],
+        requestBody: new OA\RequestBody(required: true, content: new OA\JsonContent(
+            properties: [
+                new OA\Property(property: 'product_id', type: 'integer'),
+            ]
+        )),
+        responses: [
+            new OA\Response(response: 200, description: 'Toggled'),
+            new OA\Response(response: 422, description: 'Validation error'),
+        ]
+    )]
     public function toggle(Request $request)
     {
         $validated = $request->validate([

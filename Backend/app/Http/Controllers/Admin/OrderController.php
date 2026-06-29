@@ -2,13 +2,14 @@
 
 namespace App\Http\Controllers\Admin;
 
-use App\Helpers\SocketHelper;
+use App\Services\SocketService;
 use App\Http\Controllers\Controller;
 use App\Models\Notification;
 use App\Models\Order;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Schema;
+use OpenApi\Attributes as OA;
 
 class OrderController extends Controller
 {
@@ -100,7 +101,7 @@ class OrderController extends Controller
                 ]);
                 $notif->reads()->attach($order->user_id, ['read_at' => null]);
 
-                SocketHelper::notification([
+                SocketService::notification([
                     'id'         => $notif->id,
                     'title'      => $notif->title,
                     'message'    => $notif->message,
@@ -140,7 +141,7 @@ class OrderController extends Controller
             ]);
             $notif->reads()->attach($order->user_id, ['read_at' => null]);
 
-            SocketHelper::notification([
+            SocketService::notification([
                 'id'         => $notif->id,
                 'title'      => $notif->title,
                 'message'    => $notif->message,
@@ -160,6 +161,15 @@ class OrderController extends Controller
         return redirect()->route('admin.orders.show', $order->id)->with('success', 'Payment ' . $validated['payment_status'] . ' successfully.');
     }
 
+    #[OA\Get(
+        path: '/api/admin/orders/stats',
+        summary: 'Get order statistics',
+        security: [['sanctum' => []]],
+        tags: ['Admin'],
+        responses: [
+            new OA\Response(response: 200, description: 'Order stats'),
+        ]
+    )]
     public function apiStats()
     {
         if (!Schema::hasTable('orders')) {
@@ -181,6 +191,18 @@ class OrderController extends Controller
         ]]);
     }
 
+    #[OA\Get(
+        path: '/api/admin/orders/earnings',
+        summary: 'Get earnings data for charts',
+        security: [['sanctum' => []]],
+        tags: ['Admin'],
+        parameters: [
+            new OA\Parameter(name: 'period', in: 'query', description: 'Period (daily, weekly, monthly)', schema: new OA\Schema(type: 'string', default: 'monthly')),
+        ],
+        responses: [
+            new OA\Response(response: 200, description: 'Earnings data with labels and values'),
+        ]
+    )]
     public function apiEarnings()
     {
         if (!Schema::hasTable('orders')) {
@@ -264,5 +286,15 @@ class OrderController extends Controller
         }
 
         return redirect()->route('admin.orders.index')->with('success', 'Order deleted successfully.');
+    }
+
+    public function bulkDestroy(Request $request)
+    {
+        $ids = $request->input('ids', []);
+        if (empty($ids)) {
+            return response()->json(['success' => false, 'message' => 'No items selected.'], 400);
+        }
+        Order::whereIn('id', $ids)->delete();
+        return response()->json(['success' => true, 'message' => count($ids) . ' order(s) deleted.']);
     }
 }

@@ -6,12 +6,19 @@ use App\Http\Controllers\Controller;
 use App\Models\CartItem;
 use App\Models\Product;
 use Illuminate\Http\Request;
+use OpenApi\Attributes as OA;
 
 class CartController extends Controller
 {
-    /**
-     * Get authenticated user's cart with product details.
-     */
+    #[OA\Get(
+        path: '/api/cart',
+        summary: 'Get authenticated user cart',
+        security: [['sanctum' => []]],
+        tags: ['Cart'],
+        responses: [
+            new OA\Response(response: 200, description: 'Cart items with subtotal'),
+        ]
+    )]
     public function index(Request $request)
     {
         $cartItems = CartItem::with('product.category')
@@ -28,9 +35,22 @@ class CartController extends Controller
         ]);
     }
 
-    /**
-     * Add a product to the cart (or increment quantity).
-     */
+    #[OA\Post(
+        path: '/api/cart',
+        summary: 'Add item to cart',
+        security: [['sanctum' => []]],
+        tags: ['Cart'],
+        requestBody: new OA\RequestBody(required: true, content: new OA\JsonContent(
+            properties: [
+                new OA\Property(property: 'product_id', type: 'integer'),
+                new OA\Property(property: 'quantity', type: 'integer'),
+            ]
+        )),
+        responses: [
+            new OA\Response(response: 200, description: 'Cart updated'),
+            new OA\Response(response: 422, description: 'Validation error'),
+        ]
+    )]
     public function store(Request $request)
     {
         $validated = $request->validate([
@@ -65,9 +85,25 @@ class CartController extends Controller
         return $this->index($request);
     }
 
-    /**
-     * Update cart item quantity.
-     */
+    #[OA\Put(
+        path: '/api/cart/{cartItem}',
+        summary: 'Update cart item quantity',
+        security: [['sanctum' => []]],
+        tags: ['Cart'],
+        parameters: [
+            new OA\Parameter(name: 'cartItem', in: 'path', required: true, schema: new OA\Schema(type: 'integer')),
+        ],
+        requestBody: new OA\RequestBody(required: true, content: new OA\JsonContent(
+            properties: [
+                new OA\Property(property: 'quantity', type: 'integer'),
+            ]
+        )),
+        responses: [
+            new OA\Response(response: 200, description: 'Cart updated'),
+            new OA\Response(response: 403, description: 'Forbidden'),
+            new OA\Response(response: 422, description: 'Validation error'),
+        ]
+    )]
     public function update(Request $request, CartItem $cartItem)
     {
         if ($cartItem->user_id !== $request->user()->id) {
@@ -93,9 +129,19 @@ class CartController extends Controller
         return $this->index($request);
     }
 
-    /**
-     * Remove an item from the cart.
-     */
+    #[OA\Delete(
+        path: '/api/cart/{cartItem}',
+        summary: 'Remove item from cart',
+        security: [['sanctum' => []]],
+        tags: ['Cart'],
+        parameters: [
+            new OA\Parameter(name: 'cartItem', in: 'path', required: true, schema: new OA\Schema(type: 'integer')),
+        ],
+        responses: [
+            new OA\Response(response: 200, description: 'Cart updated'),
+            new OA\Response(response: 403, description: 'Forbidden'),
+        ]
+    )]
     public function destroy(Request $request, CartItem $cartItem)
     {
         if ($cartItem->user_id !== $request->user()->id) {
@@ -107,9 +153,15 @@ class CartController extends Controller
         return $this->index($request);
     }
 
-    /**
-     * Clear all items from the authenticated user's cart.
-     */
+    #[OA\Post(
+        path: '/api/cart/clear',
+        summary: 'Clear all items from cart',
+        security: [['sanctum' => []]],
+        tags: ['Cart'],
+        responses: [
+            new OA\Response(response: 200, description: 'Cart cleared'),
+        ]
+    )]
     public function clear(Request $request)
     {
         CartItem::where('user_id', $request->user()->id)->delete();

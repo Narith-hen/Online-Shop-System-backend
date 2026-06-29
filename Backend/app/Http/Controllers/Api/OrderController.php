@@ -2,18 +2,25 @@
 
 namespace App\Http\Controllers\Api;
 
-use App\Helpers\SocketHelper;
+use App\Services\SocketService;
 use App\Http\Controllers\Controller;
 use App\Models\Notification;
 use App\Models\Order;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Schema;
+use OpenApi\Attributes as OA;
 
 class OrderController extends Controller
 {
-    /**
-     * List orders for the authenticated user
-     */
+    #[OA\Get(
+        path: '/api/orders',
+        summary: 'List orders for authenticated user',
+        security: [['sanctum' => []]],
+        tags: ['Orders'],
+        responses: [
+            new OA\Response(response: 200, description: 'Paginated list of orders'),
+        ]
+    )]
     public function index(Request $request)
     {
         $orders = Order::with(['user', 'items.product'])
@@ -24,9 +31,20 @@ class OrderController extends Controller
         return response()->json($orders);
     }
 
-    /**
-     * Show a single order for the authenticated user
-     */
+    #[OA\Get(
+        path: '/api/orders/{order}',
+        summary: 'Get order details',
+        security: [['sanctum' => []]],
+        tags: ['Orders'],
+        parameters: [
+            new OA\Parameter(name: 'order', in: 'path', required: true, schema: new OA\Schema(type: 'integer')),
+        ],
+        responses: [
+            new OA\Response(response: 200, description: 'Order details'),
+            new OA\Response(response: 403, description: 'Forbidden'),
+            new OA\Response(response: 404, description: 'Not found'),
+        ]
+    )]
     public function show(Request $request, Order $order)
     {
         if ($order->user_id !== $request->user()->id) {
@@ -38,9 +56,20 @@ class OrderController extends Controller
         return response()->json($order);
     }
 
-    /**
-     * Cancel an order (only if status is pending)
-     */
+    #[OA\Post(
+        path: '/api/orders/{order}/cancel',
+        summary: 'Cancel a pending order',
+        security: [['sanctum' => []]],
+        tags: ['Orders'],
+        parameters: [
+            new OA\Parameter(name: 'order', in: 'path', required: true, schema: new OA\Schema(type: 'integer')),
+        ],
+        responses: [
+            new OA\Response(response: 200, description: 'Order cancelled'),
+            new OA\Response(response: 403, description: 'Forbidden'),
+            new OA\Response(response: 422, description: 'Only pending orders can be cancelled'),
+        ]
+    )]
     public function cancel(Request $request, Order $order)
     {
         if ($order->user_id !== $request->user()->id) {
@@ -62,7 +91,7 @@ class OrderController extends Controller
             ]);
             $notif->reads()->attach($request->user()->id, ['read_at' => null]);
 
-            SocketHelper::notification([
+            SocketService::notification([
                 'id'         => $notif->id,
                 'title'      => $notif->title,
                 'message'    => $notif->message,

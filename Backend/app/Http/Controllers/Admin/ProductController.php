@@ -9,6 +9,7 @@ use App\Models\OrderItem;
 use App\Models\Product;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
 
 class ProductController extends Controller
@@ -104,6 +105,8 @@ class ProductController extends Controller
             $validated['image'] = $request->file('image')->store('products', 'public');
         } elseif ($request->filled('image_url')) {
             $validated['image'] = $request->image_url;
+        } elseif ($request->boolean('remove_image')) {
+            $validated['image'] = null;
         }
 
         $product = Product::create($validated);
@@ -152,12 +155,20 @@ class ProductController extends Controller
         $validated['is_active'] = $request->boolean('is_active');
 
         if ($request->hasFile('image')) {
-            if ($product->image && Storage::disk('public')->exists($product->image)) {
+            if ($product->image && !str_starts_with($product->image, 'http') && Storage::disk('public')->exists($product->image)) {
                 Storage::disk('public')->delete($product->image);
             }
             $validated['image'] = $request->file('image')->store('products', 'public');
         } elseif ($request->filled('image_url')) {
+            if ($product->image && !str_starts_with($product->image, 'http') && Storage::disk('public')->exists($product->image)) {
+                Storage::disk('public')->delete($product->image);
+            }
             $validated['image'] = $request->image_url;
+        } elseif ($request->boolean('remove_image')) {
+            if ($product->image && !str_starts_with($product->image, 'http') && Storage::disk('public')->exists($product->image)) {
+                Storage::disk('public')->delete($product->image);
+            }
+            $validated['image'] = null;
         }
 
         $product->update($validated);
@@ -169,18 +180,45 @@ class ProductController extends Controller
         return redirect()->route('admin.products.show', $product)->with('success', 'Product updated successfully.');
     }
 
-    public function destroy(Product $product)
+    public function destroy(Request $request, Product $product)
     {
+        if (!Hash::check($request->password, auth()->user()->password)) {
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json(['success' => false, 'message' => 'Incorrect password.'], 403);
+            }
+            return back()->with('error', 'Incorrect password.');
+        }
+
         if ($product->image && Storage::disk('public')->exists($product->image)) {
             Storage::disk('public')->delete($product->image);
         }
 
         $product->delete();
 
-        if (request()->ajax() || request()->wantsJson()) {
+        if ($request->ajax() || $request->wantsJson()) {
             return response()->json(['success' => true, 'message' => 'Product deleted successfully.']);
         }
 
         return redirect()->route('admin.products.index')->with('success', 'Product deleted successfully.');
+    }
+
+    public function bulkDestroy(Request $request)
+    {
+        if (!Hash::check($request->password, auth()->user()->password)) {
+            return response()->json(['success' => false, 'message' => 'Incorrect password.'], 403);
+        }
+
+        $ids = $request->input('ids', []);
+        if (empty($ids)) {
+            return response()->json(['success' => false, 'message' => 'No items selected.'], 400);
+        }
+        $products = Product::whereIn('id', $ids)->get();
+        foreach ($products as $product) {
+            if ($product->image && Storage::disk('public')->exists($product->image)) {
+                Storage::disk('public')->delete($product->image);
+            }
+            $product->delete();
+        }
+        return response()->json(['success' => true, 'message' => count($products) . ' product(s) deleted.']);
     }
 }

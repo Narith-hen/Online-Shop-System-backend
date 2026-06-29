@@ -6,77 +6,60 @@
 
 @section('content')
 
-<!-- === Top Metric Cards === -->
+<!-- Top Metric Cards -->
 <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-
-    <a href="{{ route('admin.products.index') }}" class="group relative bg-white rounded-xl shadow-sm hover:shadow-md transition-all duration-200 p-5 overflow-hidden">
-        <div class="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-blue-500 to-blue-400"></div>
-        <div class="flex items-center gap-4 mt-1">
-            <div class="w-11 h-11 rounded-xl bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center shadow-sm shadow-blue-200 shrink-0">
-                <i class="fas fa-box text-white text-lg"></i>
-            </div>
-            <div class="min-w-0">
-                <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide">Products</p>
-                <p class="text-2xl font-extrabold text-gray-900 mt-0.5">{{ $totalProducts }}</p>
-                <p class="text-xs text-gray-400 mt-0.5">{{ $activeProducts }} active</p>
+    <a href="{{ route('admin.products.index') }}" class="group card p-5 transition-all hover:shadow-md">
+        <div class="flex items-center justify-between mb-2">
+            <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide">Products</p>
+            <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center shadow-sm">
+                <i class="fas fa-box text-white text-sm"></i>
             </div>
         </div>
+        <p class="text-2xl font-extrabold text-gray-900">{{ $totalProducts }}</p>
+        <p class="text-xs text-gray-400 mt-0.5">{{ $activeProducts }} active</p>
     </a>
 
-    <a href="{{ route('admin.orders.index') }}" class="group relative bg-white rounded-xl shadow-sm hover:shadow-md transition-all duration-200 p-5 overflow-hidden">
-        <div class="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-emerald-500 to-emerald-400"></div>
-        <div class="flex items-center gap-4 mt-1">
-            <div class="w-11 h-11 rounded-xl bg-gradient-to-br from-emerald-500 to-emerald-600 flex items-center justify-center shadow-sm shadow-emerald-200 shrink-0">
-                <i class="fas fa-shopping-cart text-white text-lg"></i>
-            </div>
-            <div class="min-w-0">
-                <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide">Orders</p>
-                <p class="text-2xl font-extrabold text-gray-900 mt-0.5">{{ $totalOrders }}</p>
-                <p class="text-xs text-gray-400 mt-0.5">{{ $pendingOrders }} pending</p>
+    <a href="{{ route('admin.orders.index') }}" class="group card p-5 transition-all hover:shadow-md">
+        <div class="flex items-center justify-between mb-2">
+            <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide">Orders</p>
+            <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500 to-emerald-600 flex items-center justify-center shadow-sm">
+                <i class="fas fa-shopping-cart text-white text-sm"></i>
             </div>
         </div>
+        <p class="text-2xl font-extrabold text-gray-900">{{ $totalOrders }}</p>
+        <p class="text-xs text-gray-400 mt-0.5">{{ $pendingOrders }} pending</p>
     </a>
 
-    <div class="relative bg-white rounded-xl shadow-sm hover:shadow-md transition-all duration-200 p-5 overflow-hidden">
-        <div class="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-amber-500 to-amber-400"></div>
-        <div class="flex items-center gap-4 mt-1">
-            <div class="w-11 h-11 rounded-xl bg-gradient-to-br from-amber-500 to-amber-600 flex items-center justify-center shadow-sm shadow-amber-200 shrink-0">
-                <i class="fas fa-dollar-sign text-white text-lg"></i>
-            </div>
-            <div class="min-w-0">
-                <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide">Revenue</p>
-                <p class="text-2xl font-extrabold text-gray-900 mt-0.5">${{ number_format($totalRevenue, 2) }}</p>
-                <p class="text-xs text-gray-400 mt-0.5">all time</p>
+    <div class="card p-5 transition-all hover:shadow-md">
+        <div class="flex items-center justify-between mb-2">
+            <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide">Revenue</p>
+            <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-500 to-amber-600 flex items-center justify-center shadow-sm">
+                <i class="fas fa-dollar-sign text-white text-sm"></i>
             </div>
         </div>
+        <p class="text-2xl font-extrabold text-gray-900">${{ number_format($totalRevenue, 2) }}</p>
+        <p class="text-xs text-gray-400 mt-0.5">all time</p>
     </div>
 
-    <div class="relative bg-white rounded-xl shadow-sm hover:shadow-md transition-all duration-200 p-5 overflow-hidden">
-        <div class="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-rose-500 to-rose-400"></div>
-        <div class="flex items-center gap-4 mt-1">
-            <div class="w-11 h-11 rounded-xl bg-gradient-to-br from-rose-500 to-rose-600 flex items-center justify-center shadow-sm shadow-rose-200 shrink-0">
-                <i class="fas fa-chart-bar text-white text-lg"></i>
-            </div>
-            <div class="min-w-0">
-                <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide">Avg Order</p>
-                <p class="text-2xl font-extrabold text-gray-900 mt-0.5">
-                    ${{ $totalOrders > 0 ? number_format($totalRevenue / $totalOrders, 2) : '0.00' }}
-                </p>
-                <p class="text-xs text-gray-400 mt-0.5">per order</p>
+    <div class="card p-5 transition-all hover:shadow-md">
+        <div class="flex items-center justify-between mb-2">
+            <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide">Avg Order</p>
+            <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-rose-500 to-rose-600 flex items-center justify-center shadow-sm">
+                <i class="fas fa-chart-bar text-white text-sm"></i>
             </div>
         </div>
+        <p class="text-2xl font-extrabold text-gray-900">
+            ${{ $totalOrders > 0 ? number_format($totalRevenue / $totalOrders, 2) : '0.00' }}
+        </p>
+        <p class="text-xs text-gray-400 mt-0.5">per order</p>
     </div>
-
 </div>
 
-<!-- === Main Content Row: Charts + Recent Orders === -->
+<!-- Charts + Recent Orders -->
 <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-
-    <!-- Left Column: Revenue + Pie Chart -->
     <div class="lg:col-span-2 space-y-6">
-
         <!-- Revenue Chart -->
-        <div class="bg-white rounded-xl shadow-sm p-5 lg:p-6">
+        <div class="card p-5 lg:p-6">
             <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-5">
                 <div>
                     <h3 class="text-base lg:text-lg font-bold text-gray-900">Revenue</h3>
@@ -101,7 +84,7 @@
         </div>
 
         <!-- Products by Category -->
-        <div class="bg-white rounded-xl shadow-sm p-5 lg:p-6">
+        <div class="card p-5 lg:p-6">
             <div class="mb-3">
                 <h3 class="text-base lg:text-lg font-bold text-gray-900">Products by Category</h3>
                 <p class="text-xs text-gray-400 mt-0.5">Distribution across categories</p>
@@ -110,20 +93,18 @@
                 <canvas id="productsChart"></canvas>
             </div>
         </div>
-
     </div>
 
-    <!-- Right Column: Recent Orders (full height) -->
+    <!-- Recent Orders -->
     <div class="lg:col-span-1">
-        <div class="bg-white rounded-xl shadow-sm h-full flex flex-col overflow-hidden">
-            <div class="flex items-center justify-between px-5 lg:px-6 py-4 border-b border-gray-50 shrink-0">
+        <div class="card h-full flex flex-col overflow-hidden">
+            <div class="flex items-center justify-between px-5 lg:px-6 py-4 border-b border-gray-100 shrink-0">
                 <div>
                     <h3 class="text-base lg:text-lg font-bold text-gray-900">Recent Orders</h3>
                     <p class="text-xs text-gray-400 mt-0.5">Latest {{ $recentOrders->count() }} orders</p>
                 </div>
                 <a href="{{ route('admin.orders.index') }}" class="text-sm font-semibold text-blue-600 hover:text-blue-800 transition-colors flex items-center gap-1.5 shrink-0">
-                    View All
-                    <i class="fas fa-arrow-right text-xs"></i>
+                    View All <i class="fas fa-arrow-right text-xs"></i>
                 </a>
             </div>
 
@@ -135,54 +116,35 @@
                             <th class="text-left py-3 px-4 font-bold text-gray-500 text-xs uppercase tracking-wider">Customer</th>
                             <th class="text-left py-3 px-4 font-bold text-gray-500 text-xs uppercase tracking-wider">Amount</th>
                             <th class="text-left py-3 px-4 font-bold text-gray-500 text-xs uppercase tracking-wider">Status</th>
-                            <th class="text-left py-3 px-4 font-bold text-gray-500 text-xs uppercase tracking-wider">Date</th>
-                            <th class="text-right py-3 px-4 font-bold text-gray-500 text-xs uppercase tracking-wider"></th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-gray-50">
                         @forelse($recentOrders as $order)
                             <tr class="hover:bg-gray-50/80 transition-colors">
-                                <td class="py-2.5 px-4">
-                                    <span class="font-semibold text-gray-900">#{{ $order->id }}</span>
-                                </td>
+                                <td class="py-2.5 px-4"><span class="font-semibold text-gray-900">#{{ $order->id }}</span></td>
                                 <td class="py-2.5 px-4">
                                     <div class="flex items-center gap-2">
                                         <div class="w-6 h-6 rounded-full bg-gradient-to-br from-gray-200 to-gray-300 flex items-center justify-center flex-shrink-0">
                                             <span class="text-[10px] font-bold text-gray-500">{{ substr($order->customer_name ?? 'U', 0, 1) }}</span>
                                         </div>
-                                        <span class="text-gray-700 text-sm truncate max-w-[100px]">{{ $order->customer_name ?? 'N/A' }}</span>
+                                        <span class="text-gray-700 text-xs truncate max-w-[100px]">{{ $order->customer_name ?? 'N/A' }}</span>
                                     </div>
                                 </td>
                                 <td class="py-2.5 px-4 font-semibold text-gray-900 text-sm">${{ number_format($order->total, 2) }}</td>
                                 <td class="py-2.5 px-4">
-                                    @if($order->status === 'completed')
-                                        <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                                            <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> Done
-                                        </span>
-                                    @elseif($order->status === 'pending')
-                                        <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-amber-50 text-amber-700 border border-amber-200">
-                                            <span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span> Pending
-                                        </span>
-                                    @elseif($order->status === 'cancelled')
-                                        <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-red-50 text-red-700 border border-red-200">
-                                            <span class="w-1.5 h-1.5 rounded-full bg-red-500"></span> Cancelled
-                                        </span>
-                                    @else
-                                        <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-blue-50 text-blue-700 border border-blue-200">
-                                            <span class="w-1.5 h-1.5 rounded-full bg-blue-500"></span> {{ ucfirst($order->status) }}
-                                        </span>
-                                    @endif
-                                </td>
-                                <td class="py-2.5 px-4 text-gray-500 text-[11px] font-medium">{{ $order->created_at->format('M d') }}</td>
-                                <td class="py-2.5 px-4 text-right">
-                                    <a href="{{ route('admin.orders.show', $order->id) }}" class="inline-flex items-center justify-center w-7 h-7 rounded-lg text-blue-600 hover:bg-blue-50 transition-colors">
-                                        <i class="fas fa-eye text-xs"></i>
-                                    </a>
+                                    @php
+                                        $sc = ['completed' => 'bg-emerald-50 text-emerald-700 border-emerald-200', 'pending' => 'bg-amber-50 text-amber-700 border-amber-200', 'cancelled' => 'bg-red-50 text-red-600 border-red-200'];
+                                        $sd = ['completed' => 'Done', 'pending' => 'Pending', 'cancelled' => 'Cancelled'];
+                                    @endphp
+                                    <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold border {{ $sc[$order->status] ?? 'bg-blue-50 text-blue-700 border-blue-200' }}">
+                                        <span class="w-1.5 h-1.5 rounded-full {{ $order->status === 'completed' ? 'bg-emerald-500' : ($order->status === 'pending' ? 'bg-amber-500' : ($order->status === 'cancelled' ? 'bg-red-500' : 'bg-blue-500')) }}"></span>
+                                        {{ $sd[$order->status] ?? ucfirst($order->status) }}
+                                    </span>
                                 </td>
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="6" class="py-16 text-center text-gray-400">
+                                <td colspan="4" class="py-16 text-center text-gray-400">
                                     <i class="fas fa-inbox text-3xl mb-2 block text-gray-300"></i>
                                     <p class="text-sm font-medium">No orders yet</p>
                                 </td>
@@ -193,7 +155,6 @@
             </div>
         </div>
     </div>
-
 </div>
 
 @endsection
@@ -201,12 +162,8 @@
 @push('scripts')
 <style>
     canvas { display: block; width: 100% !important; height: 100% !important; }
-    .page-content { animation: fadeUp 0.35s ease; }
-    @keyframes fadeUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
-    .group:hover .shadow-lg { box-shadow: 0 20px 25px -5px rgba(0,0,0,0.08), 0 10px 10px -5px rgba(0,0,0,0.04) !important; }
 </style>
 <script>
-// ===== Chart data (populated from server) =====
 var _revLabels = {
     monthly: {!! json_encode($monthLabels) !!},
     weekly: {!! json_encode($weekLabels) !!},
@@ -228,25 +185,16 @@ var _revenueChart = null;
 function fmt$(v) { return '$' + Number(v).toFixed(2); }
 
 function renderRevenue(view) {
-    // 1. Update subtitle
     var subEl = document.getElementById('revenueSubtitle');
     if (subEl) subEl.textContent = _revSubtitles[view];
-
-    // 2. Update dropdown label
     var labelMap = { monthly: 'Monthly', weekly: 'Weekly', daily: 'Daily' };
     var labelEl = document.getElementById('revDropdownLabel');
     if (labelEl) labelEl.textContent = labelMap[view] || 'Daily';
-
-    // 3. Get canvas
     var canvas = document.getElementById('revenueChart');
     if (!canvas) return;
-
-    // 4. Get data for this view
     var labels = _revLabels[view] || [];
     var data = _revData[view] || [];
     var isDaily = view === 'daily';
-
-    // 5. Handle empty state
     var emptyEl = document.getElementById('revenueEmpty');
     var hasData = data.some(function(v) { return v > 0; });
     if (!hasData) {
@@ -257,13 +205,8 @@ function renderRevenue(view) {
     }
     canvas.style.display = 'block';
     if (emptyEl) emptyEl.classList.add('hidden');
-
-    // 6. Destroy old chart
     if (_revenueChart) _revenueChart.destroy();
-
     var ctx = canvas.getContext('2d');
-
-    // 7. Bar colors for daily
     var maxVal = Math.max.apply(null, data);
     if (maxVal === -Infinity) maxVal = 1;
     var bgColor = isDaily ? data.map(function(v) {
@@ -272,16 +215,12 @@ function renderRevenue(view) {
         if (r >= 0.7) return 'rgba(16, 185, 129, 0.85)';
         return 'rgba(59, 130, 246, 0.8)';
     }) : undefined;
-
-    // 8. Gradient for line charts
     var gradient = null;
     if (!isDaily) {
         gradient = ctx.createLinearGradient(0, 0, 0, 340);
         gradient.addColorStop(0, 'rgba(59, 130, 246, 0.20)');
         gradient.addColorStop(1, 'rgba(59, 130, 246, 0.01)');
     }
-
-    // 9. Create chart
     _revenueChart = new Chart(ctx, {
         type: isDaily ? 'bar' : 'line',
         data: {
@@ -323,9 +262,7 @@ function renderRevenue(view) {
                         label: function(c) {
                             var v = parseFloat(c.raw);
                             if (isDaily) {
-                                var level = v === 0 ? 'No sales'
-                                    : (v / maxVal >= 0.7 ? 'High sales'
-                                        : (v / maxVal >= 0.4 ? 'Medium sales' : 'Low sales'));
+                                var level = v === 0 ? 'No sales' : (v / maxVal >= 0.7 ? 'High sales' : (v / maxVal >= 0.4 ? 'Medium sales' : 'Low sales'));
                                 return '  ' + level + ': ' + fmt$(v);
                             }
                             return '  ' + fmt$(v);
@@ -334,96 +271,47 @@ function renderRevenue(view) {
                 }
             },
             scales: {
-                x: {
-                    grid: { display: false },
-                    ticks: { color: '#9ca3af', font: { size: 11, weight: '500' }, maxRotation: isDaily ? 45 : 0 }
-                },
-                y: {
-                    beginAtZero: true,
-                    grid: { color: 'rgba(229, 231, 235, 0.4)', drawBorder: false },
-                    border: { display: false },
-                    ticks: { color: '#9ca3af', font: { size: 11 }, padding: 8, callback: function(v) { return '$' + v; } }
-                }
+                x: { grid: { display: false }, ticks: { color: '#9ca3af', font: { size: 11, weight: '500' }, maxRotation: isDaily ? 45 : 0 } },
+                y: { beginAtZero: true, grid: { color: 'rgba(229, 231, 235, 0.4)', drawBorder: false }, border: { display: false }, ticks: { color: '#9ca3af', font: { size: 11 }, padding: 8, callback: function(v) { return '$' + v; } } }
             }
         }
     });
 }
 
-// ===== Initialize =====
 function initDashboard() {
     if (typeof Chart === 'undefined') {
         var rc = document.getElementById('revenueChart');
         if (rc) rc.parentElement.innerHTML = '<p class="text-gray-400 text-sm text-center w-full py-16">Chart library failed to load.</p>';
         return;
     }
-
-    // Setup dropdown toggle
     var ddBtn = document.getElementById('revDropdownBtn');
     var ddMenu = document.getElementById('revDropdownMenu');
     if (ddBtn && ddMenu) {
-        ddBtn.onclick = function(e) {
-            e.stopPropagation();
-            ddMenu.classList.toggle('hidden');
-        };
-        // Dropdown item clicks
+        ddBtn.onclick = function(e) { e.stopPropagation(); ddMenu.classList.toggle('hidden'); };
         ddMenu.onclick = function(e) {
             var item = e.target.closest('.revDropdownItem');
-            if (item) {
-                var view = item.getAttribute('data-view');
-                if (view) renderRevenue(view);
-                ddMenu.classList.add('hidden');
-            }
+            if (item) { renderRevenue(item.getAttribute('data-view')); ddMenu.classList.add('hidden'); }
         };
-        // Close on click outside
-        document.addEventListener('click', function() {
-            ddMenu.classList.add('hidden');
-        });
+        document.addEventListener('click', function() { ddMenu.classList.add('hidden'); });
     }
-
-    // Initial render: daily view
     renderRevenue('daily');
 
-    // ===== Product Pie Chart =====
     var catData = {!! json_encode($productCategories) !!};
     var pcCanvas = document.getElementById('productsChart');
-        if (catData && catData.length > 0 && pcCanvas) {
-            var existingPie = Chart.getChart(pcCanvas);
-            if (existingPie) existingPie.destroy();
-            var pieColors = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#06b6d4', '#84cc16', '#f97316', '#6366f1'];
+    if (catData && catData.length > 0 && pcCanvas) {
+        var ep = Chart.getChart(pcCanvas); if (ep) ep.destroy();
+        var colors = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#06b6d4', '#84cc16', '#f97316', '#6366f1'];
         new Chart(pcCanvas.getContext('2d'), {
             type: 'doughnut',
             data: {
                 labels: catData.map(function(p) { return p.category; }),
-                datasets: [{
-                    data: catData.map(function(p) { return p.count; }),
-                    backgroundColor: pieColors.slice(0, catData.length),
-                    borderWidth: 3,
-                    borderColor: '#fff',
-                    hoverOffset: 8,
-                }]
+                datasets: [{ data: catData.map(function(p) { return p.count; }), backgroundColor: colors.slice(0, catData.length), borderWidth: 3, borderColor: '#fff', hoverOffset: 8 }]
             },
             options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                cutout: '72%',
-                animation: { animateRotate: true, duration: 600 },
+                responsive: true, maintainAspectRatio: false, cutout: '72%', animation: { animateRotate: true, duration: 600 },
                 plugins: {
-                    legend: {
-                        position: 'bottom',
-                        labels: { padding: 12, usePointStyle: true, pointStyle: 'circle', font: { size: 11, weight: '500' }, color: '#6b7280' }
-                    },
-                    tooltip: {
-                        backgroundColor: '#1f2937',
-                        padding: 12,
-                        cornerRadius: 8,
-                        callbacks: {
-                            label: function(c) {
-                                var total = c.dataset.data.reduce(function(a, b) { return a + b; }, 0);
-                                var pct = ((c.raw / total) * 100).toFixed(1);
-                                return ' ' + c.label + ': ' + c.raw + ' (' + pct + '%)';
-                            }
-                        }
-                    }
+                    legend: { position: 'bottom', labels: { padding: 12, usePointStyle: true, pointStyle: 'circle', font: { size: 11, weight: '500' }, color: '#6b7280' } },
+                    tooltip: { backgroundColor: '#1f2937', padding: 12, cornerRadius: 8, callbacks: { label: function(c) { var t = c.dataset.data.reduce(function(a,b){return a+b},0); return ' ' + c.label + ': ' + c.raw + ' (' + ((c.raw/t)*100).toFixed(1) + '%)'; } } }
                 }
             }
         });
@@ -432,10 +320,7 @@ function initDashboard() {
     }
 }
 
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', initDashboard);
-} else {
-    initDashboard();
-}
+if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', initDashboard);
+else initDashboard();
 </script>
 @endpush
