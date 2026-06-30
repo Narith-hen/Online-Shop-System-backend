@@ -49,7 +49,7 @@ class CheckoutController extends Controller
         }
 
         $validator = Validator::make($request->all(), [
-            'payment_method' => 'required|string|in:aba',
+            'payment_method' => 'required|string|max:50',
             'shipping_name'    => 'nullable|string|max:255',
             'shipping_phone'   => 'nullable|string|max:20',
             'shipping_address' => 'nullable|string|max:500',
