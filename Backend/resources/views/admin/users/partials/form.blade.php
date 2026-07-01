@@ -1,8 +1,13 @@
-@if ($errors->any())
+@php $knownFields = ['name', 'email', 'password', 'role_id']; @endphp
+@if ($errors->any() && collect($errors->keys())->diff($knownFields)->isNotEmpty())
     <div class="p-4 bg-red-100 text-red-700 border border-red-300 rounded-lg">
         <ul class="list-disc list-inside text-sm">
-            @foreach ($errors->all() as $error)
-                <li>{{ $error }}</li>
+            @foreach ($errors->keys() as $key)
+                @if (!in_array($key, $knownFields))
+                    @foreach ($errors->get($key) as $error)
+                        <li>{{ $error }}</li>
+                    @endforeach
+                @endif
             @endforeach
         </ul>
     </div>
@@ -13,15 +18,17 @@
     <div>
         <label class="block text-sm font-semibold text-gray-700 mb-2">Name <span class="text-red-500">*</span></label>
         <input type="text" name="name" value="{{ old('name', $user->name ?? '') }}"
-            class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 @error('name') field-invalid @enderror"
             required>
+        @error('name') <p class="field-error">{{ $message }}</p> @enderror
     </div>
 
     <div>
         <label class="block text-sm font-semibold text-gray-700 mb-2">Email <span class="text-red-500">*</span></label>
         <input type="email" name="email" value="{{ old('email', $user->email ?? '') }}"
-            class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 @error('email') field-invalid @enderror"
             required>
+        @error('email') <p class="field-error">{{ $message }}</p> @enderror
     </div>
 
     <div>
@@ -34,14 +41,15 @@
             @endif
         </label>
         <input type="password" name="password"
-            class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 @error('password') field-invalid @enderror"
             {{ isset($user) ? '' : 'required' }}>
+        @error('password') <p class="field-error">{{ $message }}</p> @enderror
     </div>
 
     <div>
         <label class="block text-sm font-semibold text-gray-700 mb-2">Role <span class="text-red-500">*</span></label>
         <select name="role_id"
-            class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 @error('role_id') field-invalid @enderror"
             required>
             <option value="">Select a role</option>
             @foreach($roles as $role)
@@ -50,6 +58,7 @@
                 </option>
             @endforeach
         </select>
+        @error('role_id') <p class="field-error">{{ $message }}</p> @enderror
     </div>
 
 </div>

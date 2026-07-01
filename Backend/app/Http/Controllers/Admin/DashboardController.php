@@ -72,20 +72,6 @@ class DashboardController extends Controller
                     $data['monthlySales'][] = (float) ($monthlySales[$key]->total ?? 0);
                 }
 
-                // If no recent data but total revenue exists, generate sample data
-                $hasRecentOrders = array_sum($data['monthlySales']) > 0;
-                if (!$hasRecentOrders && $data['totalRevenue'] > 0) {
-                    $perMonth = round($data['totalRevenue'] / 7, 2);
-                    $data['monthlySales'] = array_map(function ($i) use ($perMonth) {
-                        return round($perMonth * (0.5 + mt_rand(0, 100) / 100), 2);
-                    }, range(0, 6));
-                    // Ensure the sample sum roughly equals total revenue
-                    $factor = $data['totalRevenue'] / array_sum($data['monthlySales']);
-                    $data['monthlySales'] = array_map(function ($v) use ($factor) {
-                        return round($v * $factor, 2);
-                    }, $data['monthlySales']);
-                }
-
                 // Daily sales for last 14 days
                 $dailySales = Order::selectRaw('DATE(created_at) as date, SUM(total) as total')
                     ->where('created_at', '>=', $now->copy()->subDays(13)->startOfDay())
@@ -103,19 +89,6 @@ class DashboardController extends Controller
                     $data['dailySales'][] = (float) ($dailySales[$key]->total ?? 0);
                 }
 
-                // If daily has no data but monthly has, distribute monthly across days
-                if (!$hasRecentOrders && $data['totalRevenue'] > 0) {
-                    $days = 14;
-                    $perDay = round($data['totalRevenue'] / $days, 2);
-                    $data['dailySales'] = array_map(function ($i) use ($perDay) {
-                        return round($perDay * (0.3 + mt_rand(0, 100) / 100), 2);
-                    }, range(0, $days - 1));
-                    $factor = $data['totalRevenue'] / array_sum($data['dailySales']);
-                    $data['dailySales'] = array_map(function ($v) use ($factor) {
-                        return round($v * $factor, 2);
-                    }, $data['dailySales']);
-                }
-
                 // Weekly sales for last 8 weeks
                 $weeklySales = Order::selectRaw('YEARWEEK(created_at, 1) as week, SUM(total) as total')
                     ->where('created_at', '>=', $now->copy()->subWeeks(7)->startOfWeek())
@@ -131,19 +104,6 @@ class DashboardController extends Controller
                     $data['weekLabels'][] = 'Week ' . $date->format('M d');
                     $key = $date->isoWeekYear() . str_pad($date->isoWeek(), 2, '0', STR_PAD_LEFT);
                     $data['weeklySales'][] = (float) ($weeklySales[$key]->total ?? 0);
-                }
-
-                // If weekly has no data but monthly has, distribute
-                if (!$hasRecentOrders && $data['totalRevenue'] > 0) {
-                    $weeks = 8;
-                    $perWeek = round($data['totalRevenue'] / $weeks, 2);
-                    $data['weeklySales'] = array_map(function ($i) use ($perWeek) {
-                        return round($perWeek * (0.4 + mt_rand(0, 100) / 100), 2);
-                    }, range(0, $weeks - 1));
-                    $factor = $data['totalRevenue'] / array_sum($data['weeklySales']);
-                    $data['weeklySales'] = array_map(function ($v) use ($factor) {
-                        return round($v * $factor, 2);
-                    }, $data['weeklySales']);
                 }
             } else {
                 $data['totalOrders'] = 0;

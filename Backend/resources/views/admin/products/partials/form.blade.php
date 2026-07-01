@@ -1,8 +1,13 @@
-@if ($errors->any())
+@php $knownFields = ['name', 'category_id', 'price', 'stock', 'image', 'image_url']; @endphp
+@if ($errors->any() && collect($errors->keys())->diff($knownFields)->isNotEmpty())
     <div class="p-3 bg-red-50 border border-red-200 rounded-lg mb-4">
         <ul class="list-disc list-inside text-sm text-red-700">
-            @foreach ($errors->all() as $error)
-                <li>{{ $error }}</li>
+            @foreach ($errors->keys() as $key)
+                @if (!in_array($key, $knownFields))
+                    @foreach ($errors->get($key) as $error)
+                        <li>{{ $error }}</li>
+                    @endforeach
+                @endif
             @endforeach
         </ul>
     </div>
@@ -11,12 +16,13 @@
 <div class="space-y-4">
     <div>
         <label class="block text-sm font-semibold text-gray-700 mb-1.5">Name <span class="text-red-500">*</span></label>
-        <input type="text" name="name" value="{{ old('name', $product->name ?? '') }}" class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm" required>
+        <input type="text" name="name" value="{{ old('name', $product->name ?? '') }}" class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm @error('name') field-invalid @enderror" required>
+        @error('name') <p class="field-error">{{ $message }}</p> @enderror
     </div>
 
     <div>
         <label class="block text-sm font-semibold text-gray-700 mb-1.5">Category <span class="text-red-500">*</span></label>
-        <select name="category_id" class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm" required>
+        <select name="category_id" class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm @error('category_id') field-invalid @enderror" required>
             <option value="">Select category</option>
             @foreach($categories as $category)
                 <option value="{{ $category->id }}" @selected((string) old('category_id', $product->category_id ?? '') === (string) $category->id)>
@@ -24,16 +30,19 @@
                 </option>
             @endforeach
         </select>
+        @error('category_id') <p class="field-error">{{ $message }}</p> @enderror
     </div>
 
     <div class="grid grid-cols-2 gap-4">
         <div>
             <label class="block text-sm font-semibold text-gray-700 mb-1.5">Price <span class="text-red-500">*</span></label>
-            <input type="number" step="0.01" min="0" name="price" value="{{ old('price', $product->price ?? '') }}" class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm" required>
+            <input type="number" step="0.01" min="0" name="price" value="{{ old('price', $product->price ?? '') }}" class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm @error('price') field-invalid @enderror" required>
+            @error('price') <p class="field-error">{{ $message }}</p> @enderror
         </div>
         <div>
             <label class="block text-sm font-semibold text-gray-700 mb-1.5">Stock <span class="text-red-500">*</span></label>
-            <input type="number" min="0" name="stock" value="{{ old('stock', $product->stock ?? '') }}" class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm" required>
+            <input type="number" min="0" name="stock" value="{{ old('stock', $product->stock ?? '') }}" class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm @error('stock') field-invalid @enderror" required>
+            @error('stock') <p class="field-error">{{ $message }}</p> @enderror
         </div>
     </div>
 
@@ -87,6 +96,8 @@
                     <span id="file-name" class="text-sm text-gray-500">No file chosen</span>
                 </div>
             </div>
+            @error('image') <p class="field-error">{{ $message }}</p> @enderror
+            @error('image_url') <p class="field-error">{{ $message }}</p> @enderror
         </div>
     </div>
 

@@ -1,8 +1,13 @@
-@if ($errors->any())
+@php $knownFields = ['name', 'description', 'image', 'image_url']; @endphp
+@if ($errors->any() && collect($errors->keys())->diff($knownFields)->isNotEmpty())
     <div class="p-3 bg-red-50 border border-red-200 rounded-lg mb-4">
         <ul class="list-disc list-inside text-sm text-red-700">
-            @foreach ($errors->all() as $error)
-                <li>{{ $error }}</li>
+            @foreach ($errors->keys() as $key)
+                @if (!in_array($key, $knownFields))
+                    @foreach ($errors->get($key) as $error)
+                        <li>{{ $error }}</li>
+                    @endforeach
+                @endif
             @endforeach
         </ul>
     </div>
@@ -12,7 +17,8 @@
     <div>
         <label class="block text-sm font-semibold text-gray-700 mb-1.5">Category Name <span class="text-red-500">*</span></label>
         <input type="text" name="name" value="{{ old('name', $category->name ?? '') }}"
-            class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm" required>
+            class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm @error('name') field-invalid @enderror" required>
+        @error('name') <p class="field-error">{{ $message }}</p> @enderror
     </div>
 
     <div>
@@ -65,13 +71,16 @@
                     <span id="cat-file-name" class="text-sm text-gray-500">No file chosen</span>
                 </div>
             </div>
+            @error('image') <p class="field-error">{{ $message }}</p> @enderror
+            @error('image_url') <p class="field-error">{{ $message }}</p> @enderror
         </div>
     </div>
 
     <div>
         <label class="block text-sm font-semibold text-gray-700 mb-1.5">Description</label>
         <textarea name="description" rows="4"
-            class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm">{{ old('description', $category->description ?? '') }}</textarea>
+            class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm @error('description') field-invalid @enderror">{{ old('description', $category->description ?? '') }}</textarea>
+        @error('description') <p class="field-error">{{ $message }}</p> @enderror
     </div>
 
     <label class="inline-flex items-center gap-2">

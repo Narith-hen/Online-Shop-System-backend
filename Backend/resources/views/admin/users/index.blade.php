@@ -134,9 +134,10 @@
                 </tbody>
             </table>
         </div>
-        <div id="pagination-container">
+        <div id="pagination-container" class="px-4 py-3 border-t border-gray-100 flex flex-col sm:flex-row items-center justify-between gap-3">
+            @include('admin.partials.per-page-select')
             @if($users->hasPages())
-                <div class="px-4 py-3 border-t border-gray-100">{{ $users->links() }}</div>
+                {{ $users->links() }}
             @endif
         </div>
     </div>
@@ -233,17 +234,6 @@
     var csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
     var editingUserId = null;
 
-    function showModal(id) { document.getElementById(id).classList.add('active'); }
-    function hideModal(id) { document.getElementById(id).classList.remove('active'); }
-
-    function showErrors(containerId, errors) {
-        var c = document.getElementById(containerId);
-        var h = '<div class="p-3 bg-red-50 border border-red-200 rounded-lg mb-4"><ul class="list-disc list-inside text-sm text-red-700">';
-        for (var k in errors) { (Array.isArray(errors[k]) ? errors[k] : [errors[k]]).forEach(function(m) { h += '<li>' + m + '</li>'; }); }
-        c.innerHTML = h + '</ul></div>';
-    }
-    function clearErrors(id) { document.getElementById(id).innerHTML = ''; }
-
     async function refreshTable() {
         try {
             var res = await fetch(window.location.href);
@@ -273,12 +263,13 @@
     function closeCreateModal() { hideModal('create-modal'); }
     async function submitCreateForm(e) {
         e.preventDefault(); clearErrors('create-errors');
+        var btn = document.querySelector('#create-form button[type="submit"]');
         var fd = new FormData(document.getElementById('create-form')); fd.append('_token', csrfToken);
         try {
             var res = await fetch('{{ route("admin.users.store") }}', { method: 'POST', headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' }, body: fd });
             if (res.ok) { closeCreateModal(); showToast('User created successfully.', 'success'); adminNavigate(window.location.href); }
-            else { var d = await res.json(); showErrors('create-errors', d.errors || { general: [d.message || 'Error'] }); }
-        } catch (e) { showErrors('create-errors', { general: ['Network error.'] }); }
+            else { var d = await res.json(); showErrors('create-errors', d.errors || { general: [d.message || 'Error'] }); setBtnLoading(btn, false); }
+        } catch (e) { showErrors('create-errors', { general: ['Network error.'] }); setBtnLoading(btn, false); }
     }
 
     // ===== EDIT =====
@@ -308,12 +299,13 @@
     function closeEditModal() { hideModal('edit-modal'); editingUserId = null; }
     async function submitEditForm(e) {
         e.preventDefault(); if (!editingUserId) return; clearErrors('edit-errors');
+        var btn = document.querySelector('#edit-form button[type="submit"]');
         var fd = new FormData(document.getElementById('edit-form'));
         try {
             var res = await fetch('/admin/users/' + editingUserId, { method: 'POST', headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' }, body: fd });
             if (res.ok) { closeEditModal(); showToast('User updated successfully.', 'success'); adminNavigate(window.location.href); }
-            else { var d = await res.json(); showErrors('edit-errors', d.errors || { general: [d.message || 'Error'] }); }
-        } catch (e) { showErrors('edit-errors', { general: ['Network error.'] }); }
+            else { var d = await res.json(); showErrors('edit-errors', d.errors || { general: [d.message || 'Error'] }); setBtnLoading(btn, false); }
+        } catch (e) { showErrors('edit-errors', { general: ['Network error.'] }); setBtnLoading(btn, false); }
     }
 
     // ===== DELETE =====

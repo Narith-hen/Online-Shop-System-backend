@@ -136,6 +136,16 @@
         #bulk-bar { position: fixed; bottom: 0; left: 0; right: 0; z-index: 40; transform: translateY(100%); transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1); }
         #bulk-bar.active { transform: translateY(0); }
 
+        /* ===== Form Feedback ===== */
+        .field-invalid { border-color: #ef4444 !important; background-color: #fef2f2 !important; }
+        .field-error { color: #dc2626; font-size: 0.75rem; margin-top: 0.375rem; }
+        .btn-spinner { display: inline-block; width: 14px; height: 14px; border: 2px solid rgba(255,255,255,0.35); border-top-color: #fff; border-radius: 50%; animation: spin 0.6s linear infinite; vertical-align: -2px; margin-right: 0.4em; }
+        button.btn-loading, a.btn-loading { pointer-events: none; opacity: 0.75; cursor: default; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* ===== Modal Focus ===== */
+        .modal-content :focus-visible { outline: 2px solid #3b82f6; outline-offset: 1px; }
+
         /* ===== Responsive ===== */
         @media (max-width: 1199px) and (min-width: 768px) {
             .sidebar { width: 80px !important; }
@@ -404,7 +414,7 @@
                 <p id="delete-error" class="text-red-600 text-sm hidden">Incorrect password.</p>
                 <div class="flex items-center justify-center gap-3 mt-4">
                     <button onclick="closeDeleteModal()" class="px-5 py-2.5 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition">Cancel</button>
-                    <button onclick="confirmDelete()" class="px-5 py-2.5 text-sm font-medium text-white bg-red-600 hover:bg-red-700 rounded-lg transition">Delete</button>
+                    <button id="delete-confirm-btn" onclick="confirmDelete()" class="px-5 py-2.5 text-sm font-medium text-white bg-red-600 hover:bg-red-700 rounded-lg transition">Delete</button>
                 </div>
             </div>
         </div>
@@ -431,7 +441,7 @@
                 <p id="bulk-delete-error" class="text-red-600 text-sm hidden">Incorrect password.</p>
                 <div class="flex items-center justify-center gap-3 mt-4">
                     <button onclick="closeBulkDeleteModal()" class="px-5 py-2.5 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition">Cancel</button>
-                    <button onclick="confirmBulkDelete()" class="px-5 py-2.5 text-sm font-medium text-white bg-red-600 hover:bg-red-700 rounded-lg transition">Delete All</button>
+                    <button id="bulk-delete-confirm-btn" onclick="confirmBulkDelete()" class="px-5 py-2.5 text-sm font-medium text-white bg-red-600 hover:bg-red-700 rounded-lg transition">Delete All</button>
                 </div>
             </div>
         </div>
@@ -511,6 +521,10 @@
         function adminNavigate(href, replace) {
             if (!href || href === '#' || href.startsWith('mailto:') || href.startsWith('tel:')) return;
 
+            document.querySelectorAll('.modal-overlay.active').forEach(function(el) { el.classList.remove('active'); });
+            document.body.style.overflow = '';
+            _lastFocusedEl = null;
+
             var fade = document.getElementById('content-fade');
             var start = Date.now();
             if (fade) fade.classList.add('fade-out');
@@ -524,6 +538,8 @@
                 var doc = new DOMParser().parseFromString(html, 'text/html');
                 var newContent = doc.getElementById('content-fade');
                 if (!newContent) { window.location.href = href; return; }
+                var newPageScripts = doc.getElementById('page-scripts');
+                var newBulkActions = doc.getElementById('bulk-actions-stack');
 
                 var elapsed = Date.now() - start;
                 var remaining = Math.max(0, 400 - elapsed);
@@ -535,12 +551,21 @@
                         });
                         fade.innerHTML = newContent.innerHTML;
 
-                        // Re-execute scripts
-                        fade.querySelectorAll('script').forEach(function(s) {
-                            var ns = document.createElement('script');
-                            Array.from(s.attributes).forEach(function(a) { ns.setAttribute(a.name, a.value); });
-                            ns.textContent = s.textContent;
-                            s.parentNode.replaceChild(ns, s);
+                        var bulkActions = document.getElementById('bulk-actions-stack');
+                        if (bulkActions) bulkActions.innerHTML = newBulkActions ? newBulkActions.innerHTML : '';
+
+                        var pageScripts = document.getElementById('page-scripts');
+                        if (pageScripts) pageScripts.innerHTML = newPageScripts ? newPageScripts.innerHTML : '';
+
+                        // Re-execute scripts (page content + page-specific pushed scripts)
+                        var scriptContainers = pageScripts ? [fade, pageScripts] : [fade];
+                        scriptContainers.forEach(function(container) {
+                            container.querySelectorAll('script').forEach(function(s) {
+                                var ns = document.createElement('script');
+                                Array.from(s.attributes).forEach(function(a) { ns.setAttribute(a.name, a.value); });
+                                ns.textContent = s.textContent;
+                                s.parentNode.replaceChild(ns, s);
+                            });
                         });
 
                         var title = doc.querySelector('title');
@@ -623,6 +648,116 @@
             setTimeout(function() { if (toast.parentNode) toast.remove(); }, 3000);
         }
 
+        // ==================== MODALS & FORMS (shared) ====================
+        var _lastFocusedEl = null;
+
+        function showModal(id) {
+            var modal = document.getElementById(id);
+            if (!modal) return;
+            _lastFocusedEl = document.activeElement;
+            modal.classList.add('active');
+            document.body.style.overflow = 'hidden';
+            setTimeout(function() {
+                var field = modal.querySelector('.modal-content input:not([type="hidden"]):not([disabled]), .modal-content select, .modal-content textarea');
+                if (field) field.focus();
+            }, 60);
+        }
+
+        function hideModal(id) {
+            var modal = document.getElementById(id);
+            if (modal) modal.classList.remove('active');
+            if (!document.querySelector('.modal-overlay.active')) document.body.style.overflow = '';
+            if (_lastFocusedEl && typeof _lastFocusedEl.focus === 'function') { _lastFocusedEl.focus(); _lastFocusedEl = null; }
+        }
+
+        document.addEventListener('keydown', function(e) {
+            var openModal = document.querySelector('.modal-overlay.active');
+            if (!openModal) return;
+            if (e.key === 'Escape') {
+                var closeBtn = openModal.querySelector('.modal-close');
+                if (closeBtn) closeBtn.click();
+                return;
+            }
+            if (e.key === 'Tab') {
+                var focusable = openModal.querySelectorAll('a[href], button:not([disabled]), input:not([disabled]):not([type="hidden"]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])');
+                if (!focusable.length) return;
+                var first = focusable[0], last = focusable[focusable.length - 1];
+                if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+                else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+            }
+        });
+
+        function showErrors(containerId, errors) {
+            var container = document.getElementById(containerId);
+            if (!container) return;
+            var form = document.getElementById(containerId.replace(/-errors$/, '-form'));
+            if (form) {
+                form.querySelectorAll('.field-error').forEach(function(el) { el.remove(); });
+                form.querySelectorAll('.field-invalid').forEach(function(el) { el.classList.remove('field-invalid'); });
+            }
+            var general = [];
+            for (var key in errors) {
+                var messages = Array.isArray(errors[key]) ? errors[key] : [errors[key]];
+                var field = form ? form.querySelector('[name="' + key + '"]') : null;
+                if (field) {
+                    field.classList.add('field-invalid');
+                    var msg = document.createElement('p');
+                    msg.className = 'field-error';
+                    msg.textContent = messages[0];
+                    field.insertAdjacentElement('afterend', msg);
+                } else {
+                    general = general.concat(messages);
+                }
+            }
+            if (general.length) {
+                var h = '<div class="p-3 bg-red-50 border border-red-200 rounded-lg mb-4"><ul class="list-disc list-inside text-sm text-red-700">';
+                general.forEach(function(m) { h += '<li>' + m + '</li>'; });
+                container.innerHTML = h + '</ul>';
+            } else {
+                container.innerHTML = '';
+            }
+        }
+
+        function clearErrors(containerId) {
+            var container = document.getElementById(containerId);
+            if (container) container.innerHTML = '';
+            var form = document.getElementById(containerId.replace(/-errors$/, '-form'));
+            if (form) {
+                form.querySelectorAll('.field-error').forEach(function(el) { el.remove(); });
+                form.querySelectorAll('.field-invalid').forEach(function(el) { el.classList.remove('field-invalid'); });
+            }
+        }
+
+        function setBtnLoading(btn, loading) {
+            if (!btn) return;
+            if (loading) {
+                if (!btn.dataset.originalHtml) btn.dataset.originalHtml = btn.innerHTML;
+                btn.disabled = true;
+                btn.classList.add('btn-loading');
+                btn.innerHTML = '<span class="btn-spinner"></span>' + btn.dataset.originalHtml.replace(/<i class="fas[^"]*"><\/i>\s*/, '');
+            } else {
+                btn.disabled = false;
+                btn.classList.remove('btn-loading');
+                if (btn.dataset.originalHtml) btn.innerHTML = btn.dataset.originalHtml;
+            }
+        }
+
+        function setPerPage(value) {
+            document.cookie = 'per_page=' + encodeURIComponent(value) + ';path=/;max-age=' + (60 * 60 * 24 * 365);
+            window.location.reload();
+        }
+
+        // Auto-loading feedback for any real POST form submission (native or AJAX-intercepted)
+        document.addEventListener('submit', function(e) {
+            var form = e.target;
+            if (!form || form.tagName !== 'FORM') return;
+            if ((form.getAttribute('method') || 'GET').toUpperCase() !== 'POST') return;
+            if (form.dataset.noLoading === 'true') return;
+            var btn = form.querySelector('button[type="submit"]');
+            if (!btn || btn.disabled) return;
+            setBtnLoading(btn, true);
+        }, true);
+
         // ==================== BANNERS ====================
         function dismissBanner(el) {
             var banner = el.closest('[id$="-banner"]');
@@ -653,6 +788,7 @@
             document.getElementById('delete-password').value = '';
             document.getElementById('delete-error').classList.add('hidden');
             document.getElementById('delete-modal').classList.add('active');
+            document.body.style.overflow = 'hidden';
             setTimeout(function() { document.getElementById('delete-password').focus(); }, 100);
         }
 
@@ -661,6 +797,7 @@
             document.getElementById('delete-password').value = '';
             document.getElementById('delete-error').classList.add('hidden');
             document.getElementById('delete-modal').classList.remove('active');
+            if (!document.querySelector('.modal-overlay.active')) document.body.style.overflow = '';
         }
 
         function showBulkDeleteModal(count) {
@@ -668,6 +805,7 @@
             document.getElementById('bulk-delete-password').value = '';
             document.getElementById('bulk-delete-error').classList.add('hidden');
             document.getElementById('bulk-delete-modal').classList.add('active');
+            document.body.style.overflow = 'hidden';
             setTimeout(function() { document.getElementById('bulk-delete-password').focus(); }, 100);
         }
 
@@ -675,6 +813,7 @@
             document.getElementById('bulk-delete-password').value = '';
             document.getElementById('bulk-delete-error').classList.add('hidden');
             document.getElementById('bulk-delete-modal').classList.remove('active');
+            if (!document.querySelector('.modal-overlay.active')) document.body.style.overflow = '';
         }
 
         async function confirmDelete() {
@@ -686,6 +825,8 @@
                 document.getElementById('delete-error').classList.remove('hidden');
                 return;
             }
+            var btn = document.getElementById('delete-confirm-btn');
+            setBtnLoading(btn, true);
             try {
                 var res = await fetch(state.deleteUrl, {
                     method: 'DELETE',
@@ -717,6 +858,7 @@
                     showToast(d2?.message || 'Delete failed.', 'error');
                 }
             } catch (e) { showToast('Network error.', 'error'); }
+            finally { setBtnLoading(btn, false); }
         }
 
         // ==================== BULK SYSTEM ====================
@@ -798,6 +940,8 @@
                 document.getElementById('bulk-delete-error').classList.remove('hidden');
                 return;
             }
+            var btn = document.getElementById('bulk-delete-confirm-btn');
+            setBtnLoading(btn, true);
             try {
                 var res = await fetch(bulkState.url, {
                     method: 'DELETE',
@@ -825,6 +969,7 @@
                     showToast(data.message || 'Delete failed.', 'error');
                 }
             } catch (e) { showToast('Network error.', 'error'); }
+            finally { setBtnLoading(btn, false); }
         }
     </script>
 
@@ -838,6 +983,7 @@
                 </div>
                 <div class="flex items-center gap-3">
                     <button onclick="bulkDeselectAll()" class="px-4 py-1.5 text-sm text-gray-300 hover:text-white transition font-medium">Deselect All</button>
+                    <div id="bulk-actions-stack" class="flex items-center gap-3">@stack('bulk-actions')</div>
                     <button onclick="bulkDeleteSelected()" class="px-5 py-1.5 bg-red-600 hover:bg-red-700 text-white text-sm rounded-lg transition font-medium flex items-center gap-2">
                         <i class="fas fa-trash"></i> Delete Selected
                     </button>
@@ -855,7 +1001,7 @@
         function connectSocket() {
             if (adminSocket?.connected) return;
             if (adminSocket) adminSocket.disconnect();
-            adminSocket = io('http://127.0.0.1:3001', { transports: ['websocket', 'polling'] });
+            adminSocket = io('{{ config('services.socket.url') }}', { transports: ['websocket', 'polling'] });
             adminSocket.on('connect', () => console.log('[Admin] Socket connected'));
             adminSocket.on('connect_error', (err) => console.error('[Admin] Socket error:', err.message));
             adminSocket.on('admin-notification', (data) => {

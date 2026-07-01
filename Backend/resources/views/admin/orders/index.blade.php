@@ -146,14 +146,86 @@
                 </tbody>
             </table>
         </div>
-        @if(isset($orders) && method_exists($orders, 'links') && $orders->hasPages())
-            <div class="px-4 py-3 border-t border-gray-100">{{ $orders->links() }}</div>
-        @endif
+        <div class="px-4 py-3 border-t border-gray-100 flex flex-col sm:flex-row items-center justify-between gap-3">
+            @include('admin.partials.per-page-select')
+            @if(isset($orders) && method_exists($orders, 'links') && $orders->hasPages())
+                {{ $orders->links() }}
+            @endif
+        </div>
     </div>
 </div>
 
+<!-- BULK STATUS MODAL -->
+<div id="bulk-status-modal" class="modal-overlay">
+    <div class="modal-backdrop" onclick="hideModal('bulk-status-modal')"></div>
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>Change Order Status</h3>
+            <button onclick="hideModal('bulk-status-modal')" class="modal-close"><i class="fas fa-times"></i></button>
+        </div>
+        <div class="modal-body">
+            <p id="bulk-status-count" class="text-sm text-gray-500 mb-3"></p>
+            <label class="block text-sm font-semibold text-gray-700 mb-1.5">New Status</label>
+            <select id="bulk-status-select" class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm">
+                <option value="pending">Pending</option>
+                <option value="processing">Processing</option>
+                <option value="shipped">Shipped</option>
+                <option value="completed">Completed</option>
+                <option value="cancelled">Cancelled</option>
+            </select>
+            <p id="bulk-status-error" class="text-xs text-red-600 mt-2 hidden"></p>
+            <div class="flex gap-2 pt-4">
+                <button type="button" onclick="hideModal('bulk-status-modal')" class="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 font-medium text-sm transition">Cancel</button>
+                <button type="button" id="bulk-status-confirm-btn" onclick="confirmBulkStatus()" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium text-sm transition">Update Status</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@push('bulk-actions')
+<button onclick="openBulkStatusModal()" class="px-5 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-sm rounded-lg transition font-medium flex items-center gap-2">
+    <i class="fas fa-exchange-alt"></i> Change Status
+</button>
+@endpush
+
 @push('scripts')
 <script>
+    function openBulkStatusModal() {
+        if (bulkState.ids.size === 0) return;
+        document.getElementById('bulk-status-count').textContent = bulkState.ids.size + ' order(s) will be updated.';
+        document.getElementById('bulk-status-error').classList.add('hidden');
+        showModal('bulk-status-modal');
+    }
+
+    async function confirmBulkStatus() {
+        var ids = Array.from(bulkState.ids);
+        if (ids.length === 0) return;
+        var status = document.getElementById('bulk-status-select').value;
+        var btn = document.getElementById('bulk-status-confirm-btn');
+        setBtnLoading(btn, true);
+        try {
+            var res = await fetch('{{ route("admin.orders.bulk-update-status") }}', {
+                method: 'POST',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json',
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                },
+                body: JSON.stringify({ ids: ids, status: status }),
+            });
+            var data = await res.json();
+            if (res.ok) {
+                hideModal('bulk-status-modal');
+                bulkDeselectAll();
+                showToast(data.message || 'Order status updated.', 'success');
+                window.location.reload();
+            } else {
+                document.getElementById('bulk-status-error').textContent = data.message || 'Update failed.';
+                document.getElementById('bulk-status-error').classList.remove('hidden');
+            }
+        } catch (e) { showToast('Network error.', 'error'); }
+        finally { setBtnLoading(btn, false); }
+    }
 </script>
 @endpush
 

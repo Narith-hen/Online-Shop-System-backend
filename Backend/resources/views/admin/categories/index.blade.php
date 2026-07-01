@@ -115,9 +115,10 @@
                 </tbody>
             </table>
         </div>
-        <div id="pagination-container">
+        <div id="pagination-container" class="px-4 py-3 border-t border-gray-100 flex flex-col sm:flex-row items-center justify-between gap-3">
+            @include('admin.partials.per-page-select')
             @if($categories->hasPages())
-                <div class="px-4 py-3 border-t border-gray-100">{{ $categories->links() }}</div>
+                {{ $categories->links() }}
             @endif
         </div>
     </div>
@@ -260,17 +261,6 @@
     var editingCatId = null;
     var csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
 
-
-    function showModal(id) { document.getElementById(id).classList.add('active'); }
-    function hideModal(id) { document.getElementById(id).classList.remove('active'); }
-
-    function showErrors(id, errors) {
-        var h = '<div class="p-3 bg-red-50 border border-red-200 rounded-lg mb-4"><ul class="list-disc list-inside text-sm text-red-700">';
-        for (var k in errors) { (Array.isArray(errors[k]) ? errors[k] : [errors[k]]).forEach(function(m) { h += '<li>' + m + '</li>'; }); }
-        document.getElementById(id).innerHTML = h + '</ul></div>';
-    }
-    function clearErrors(id) { document.getElementById(id).innerHTML = ''; }
-
     function previewCatUrl(imgId, boxId, url) {
         var img = document.getElementById(imgId);
         var box = document.getElementById(boxId);
@@ -329,12 +319,13 @@
     function closeCreateModal() { hideModal('create-modal'); }
     async function submitCreateForm(e) {
         e.preventDefault(); clearErrors('create-errors');
+        var btn = document.querySelector('#create-form button[type="submit"]');
         var fd = new FormData(document.getElementById('create-form')); fd.append('_token', csrfToken);
         try {
             var res = await fetch('{{ route("admin.categories.store") }}', { method: 'POST', headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' }, body: fd });
             if (res.ok) { closeCreateModal(); showToast('Category created successfully.', 'success'); adminNavigate(window.location.href); }
-            else { var d = await res.json(); showErrors('create-errors', d.errors || { general: [d.message || 'Error'] }); }
-        } catch (e) { showErrors('create-errors', { general: ['Network error.'] }); }
+            else { var d = await res.json(); showErrors('create-errors', d.errors || { general: [d.message || 'Error'] }); setBtnLoading(btn, false); }
+        } catch (e) { showErrors('create-errors', { general: ['Network error.'] }); setBtnLoading(btn, false); }
     }
 
     // ===== EDIT =====
@@ -361,12 +352,13 @@
     function closeEditModal() { hideModal('edit-modal'); editingCatId = null; }
     async function submitEditForm(e) {
         e.preventDefault(); if (!editingCatId) return; clearErrors('edit-errors');
+        var btn = document.querySelector('#edit-form button[type="submit"]');
         var fd = new FormData(document.getElementById('edit-form')); fd.append('_token', csrfToken); fd.append('_method', 'PUT');
         try {
             var res = await fetch('/admin/categories/' + editingCatId, { method: 'POST', headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' }, body: fd });
             if (res.ok) { closeEditModal(); showToast('Category updated successfully.', 'success'); adminNavigate(window.location.href); }
-            else { var d = await res.json(); showErrors('edit-errors', d.errors || { general: [d.message || 'Error'] }); }
-        } catch (e) { showErrors('edit-errors', { general: ['Network error.'] }); }
+            else { var d = await res.json(); showErrors('edit-errors', d.errors || { general: [d.message || 'Error'] }); setBtnLoading(btn, false); }
+        } catch (e) { showErrors('edit-errors', { general: ['Network error.'] }); setBtnLoading(btn, false); }
     }
 
     // ===== DELETE =====

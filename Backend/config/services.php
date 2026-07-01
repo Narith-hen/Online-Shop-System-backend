@@ -50,4 +50,8 @@ return [
         'redirect' => env('GITHUB_REDIRECT_URI'),
     ],
 
+    'socket' => [
+        'url' => env('SOCKET_SERVER_URL', 'http://127.0.0.1:3001'),
+    ],
+
 ];

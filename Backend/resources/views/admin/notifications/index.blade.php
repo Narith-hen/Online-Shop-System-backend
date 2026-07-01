@@ -133,9 +133,12 @@
                 </tbody>
             </table>
         </div>
-        @if(method_exists($notifications, 'links') && $notifications->hasPages())
-            <div class="px-4 py-3 border-t border-gray-100">{{ $notifications->links() }}</div>
-        @endif
+        <div class="px-4 py-3 border-t border-gray-100 flex flex-col sm:flex-row items-center justify-between gap-3">
+            @include('admin.partials.per-page-select')
+            @if(method_exists($notifications, 'links') && $notifications->hasPages())
+                {{ $notifications->links() }}
+            @endif
+        </div>
     </div>
 </div>
 

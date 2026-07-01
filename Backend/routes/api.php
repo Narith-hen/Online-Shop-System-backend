@@ -57,6 +57,10 @@ Route::get('/categories/{category}', [CategoryController::class, 'show'])
 Route::get('/products/{product}/reviews', [ReviewController::class, 'index'])
     ->name('api.products.reviews.index');
 
+// Public Storefront Stats (product/customer counts, average rating)
+Route::get('/stats', [\App\Http\Controllers\Api\StatsController::class, 'index'])
+    ->name('api.stats');
+
 // Public Payment Methods (QR info)
 Route::get('/payment-methods', [PaymentController::class, 'methods'])
     ->name('api.payment-methods');

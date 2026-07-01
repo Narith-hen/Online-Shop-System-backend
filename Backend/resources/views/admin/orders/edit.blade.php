@@ -85,16 +85,10 @@
 <script>
     var csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
 
-    function showErrors(containerId, errors) {
-        var c = document.getElementById(containerId);
-        var h = '<div class="p-3 bg-red-50 border border-red-200 rounded-lg mb-4"><ul class="list-disc list-inside text-sm text-red-700">';
-        for (var k in errors) { (Array.isArray(errors[k]) ? errors[k] : [errors[k]]).forEach(function(m) { h += '<li>' + m + '</li>'; }); }
-        c.innerHTML = h + '</ul></div>';
-    }
-
     async function submitEditForm(e) {
         e.preventDefault();
-        document.getElementById('edit-errors').innerHTML = '';
+        clearErrors('edit-errors');
+        var btn = document.querySelector('#edit-form button[type="submit"]');
         var fd = new FormData(document.getElementById('edit-form'));
         fd.append('_method', 'PUT');
         try {
@@ -108,8 +102,9 @@
             } else {
                 var d = await res.json();
                 showErrors('edit-errors', d.errors || { general: [d.message || 'Something went wrong.'] });
+                setBtnLoading(btn, false);
             }
-        } catch (err) { showErrors('edit-errors', { general: ['Network error.'] }); }
+        } catch (err) { showErrors('edit-errors', { general: ['Network error.'] }); setBtnLoading(btn, false); }
     }
 </script>
 @endpush

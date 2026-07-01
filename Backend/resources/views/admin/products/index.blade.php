@@ -176,9 +176,12 @@
                 </tbody>
             </table>
         </div>
-        @if(isset($products) && method_exists($products, 'links') && $products->hasPages())
-            <div class="px-4 py-3 border-t border-gray-100">{{ $products->links() }}</div>
-        @endif
+        <div class="px-4 py-3 border-t border-gray-100 flex flex-col sm:flex-row items-center justify-between gap-3">
+            @include('admin.partials.per-page-select')
+            @if(isset($products) && method_exists($products, 'links') && $products->hasPages())
+                {{ $products->links() }}
+            @endif
+        </div>
     </div>
 
 </div>
@@ -341,19 +344,6 @@
     var editingProdId = null;
     var csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
 
-    function showModal(id) { document.getElementById(id).classList.add('active'); }
-    function hideModal(id) { document.getElementById(id).classList.remove('active'); }
-
-    function showErrors(containerId, errors) {
-        var c = document.getElementById(containerId);
-        var h = '<div class="p-3 bg-red-50 border border-red-200 rounded-lg mb-4"><ul class="list-disc list-inside text-sm text-red-700">';
-        for (var k in errors) {
-            (Array.isArray(errors[k]) ? errors[k] : [errors[k]]).forEach(function(m) { h += '<li>' + m + '</li>'; });
-        }
-        c.innerHTML = h + '</ul></div>';
-    }
-    function clearErrors(id) { document.getElementById(id).innerHTML = ''; }
-
     function previewModalUrl(imgId, boxId, url) {
         var img = document.getElementById(imgId);
         var box = document.getElementById(boxId);
@@ -422,12 +412,13 @@
     function closeCreateModal() { hideModal('create-modal'); }
     async function submitCreateForm(e) {
         e.preventDefault(); clearErrors('create-errors');
+        var btn = document.querySelector('#create-form button[type="submit"]');
         var fd = new FormData(document.getElementById('create-form')); fd.append('_token', csrfToken);
         try {
             var res = await fetch('{{ route("admin.products.store") }}', { method: 'POST', headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' }, body: fd });
             if (res.ok) { closeCreateModal(); showToast('Product created successfully.', 'success'); adminNavigate(window.location.href); }
-            else { var d = await res.json(); showErrors('create-errors', d.errors || { general: [d.message || 'Error'] }); }
-        } catch (e) { showErrors('create-errors', { general: ['Network error.'] }); }
+            else { var d = await res.json(); showErrors('create-errors', d.errors || { general: [d.message || 'Error'] }); setBtnLoading(btn, false); }
+        } catch (e) { showErrors('create-errors', { general: ['Network error.'] }); setBtnLoading(btn, false); }
     }
 
     // ===== EDIT =====
@@ -457,12 +448,13 @@
     function closeEditModal() { hideModal('edit-modal'); editingProdId = null; }
     async function submitEditForm(e) {
         e.preventDefault(); if (!editingProdId) return; clearErrors('edit-errors');
+        var btn = document.querySelector('#edit-form button[type="submit"]');
         var fd = new FormData(document.getElementById('edit-form')); fd.append('_method', 'PUT'); fd.append('_token', csrfToken);
         try {
             var res = await fetch('/admin/products/' + editingProdId, { method: 'POST', headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' }, body: fd });
             if (res.ok) { closeEditModal(); showToast('Product updated successfully.', 'success'); adminNavigate(window.location.href); }
-            else { var d = await res.json(); showErrors('edit-errors', d.errors || { general: [d.message || 'Error'] }); }
-        } catch (e) { showErrors('edit-errors', { general: ['Network error.'] }); }
+            else { var d = await res.json(); showErrors('edit-errors', d.errors || { general: [d.message || 'Error'] }); setBtnLoading(btn, false); }
+        } catch (e) { showErrors('edit-errors', { general: ['Network error.'] }); setBtnLoading(btn, false); }
     }
 
     // ===== DELETE =====

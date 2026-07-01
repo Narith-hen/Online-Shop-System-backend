@@ -8,6 +8,7 @@ use App\Models\Notification;
 use App\Models\Order;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Schema;
 use OpenApi\Attributes as OA;
 
@@ -92,27 +93,7 @@ class OrderController extends Controller
         $order->update($validated);
 
         if ($oldStatus !== $order->status) {
-            try {
-                $notif = Notification::create([
-                    'title'   => 'Order #' . $order->id . ' ' . ucfirst($order->status),
-                    'message' => 'Your order status has been updated from "' . ucfirst($oldStatus) . '" to "' . ucfirst($order->status) . '".',
-                    'type'    => 'news',
-                    'link'    => '/orders/' . $order->id . '/receipt',
-                ]);
-                $notif->reads()->attach($order->user_id, ['read_at' => null]);
-
-                SocketService::notification([
-                    'id'         => $notif->id,
-                    'title'      => $notif->title,
-                    'message'    => $notif->message,
-                    'type'       => $notif->type,
-                    'link'       => $notif->link,
-                    'created_at' => $notif->created_at->toIso8601String(),
-                    'user_id'    => $order->user_id,
-                ]);
-            } catch (\Throwable $e) {
-                // Don't block the update if notification fails
-            }
+            $this->notifyStatusChange($order, $oldStatus);
         }
 
         if ($request->expectsJson()) {
@@ -120,6 +101,53 @@ class OrderController extends Controller
         }
 
         return redirect()->route('admin.orders.index')->with('success', 'Order status updated successfully.');
+    }
+
+    public function bulkUpdateStatus(Request $request)
+    {
+        $validated = $request->validate([
+            'ids'    => 'required|array|min:1',
+            'ids.*'  => 'integer',
+            'status' => 'required|string|in:pending,processing,shipped,completed,cancelled',
+        ]);
+
+        $orders = Order::whereIn('id', $validated['ids'])->get();
+
+        foreach ($orders as $order) {
+            $oldStatus = $order->status;
+            if ($oldStatus === $validated['status']) {
+                continue;
+            }
+            $order->update(['status' => $validated['status']]);
+            $this->notifyStatusChange($order, $oldStatus);
+        }
+
+        return response()->json(['success' => true, 'message' => count($orders) . ' order(s) updated to "' . ucfirst($validated['status']) . '".']);
+    }
+
+    private function notifyStatusChange(Order $order, string $oldStatus): void
+    {
+        try {
+            $notif = Notification::create([
+                'title'   => 'Order #' . $order->id . ' ' . ucfirst($order->status),
+                'message' => 'Your order status has been updated from "' . ucfirst($oldStatus) . '" to "' . ucfirst($order->status) . '".',
+                'type'    => 'news',
+                'link'    => '/orders/' . $order->id . '/receipt',
+            ]);
+            $notif->reads()->attach($order->user_id, ['read_at' => null]);
+
+            SocketService::notification([
+                'id'         => $notif->id,
+                'title'      => $notif->title,
+                'message'    => $notif->message,
+                'type'       => $notif->type,
+                'link'       => $notif->link,
+                'created_at' => $notif->created_at->toIso8601String(),
+                'user_id'    => $order->user_id,
+            ]);
+        } catch (\Throwable $e) {
+            // Don't block the update if notification fails
+        }
     }
 
     public function verifyPayment(Request $request, Order $order)
@@ -277,11 +305,18 @@ class OrderController extends Controller
         ]]);
     }
 
-    public function destroy(Order $order)
+    public function destroy(Request $request, Order $order)
     {
+        if (!Hash::check($request->password, auth()->user()->password)) {
+            if ($request->ajax() || $request->wantsJson() || $request->expectsJson()) {
+                return response()->json(['success' => false, 'message' => 'Incorrect password.'], 403);
+            }
+            return back()->with('error', 'Incorrect password.');
+        }
+
         $order->delete();
 
-        if (request()->expectsJson()) {
+        if ($request->expectsJson()) {
             return response()->json(['success' => true, 'message' => 'Order deleted successfully.']);
         }
 
@@ -290,6 +325,10 @@ class OrderController extends Controller
 
     public function bulkDestroy(Request $request)
     {
+        if (!Hash::check($request->password, auth()->user()->password)) {
+            return response()->json(['success' => false, 'message' => 'Incorrect password.'], 403);
+        }
+
         $ids = $request->input('ids', []);
         if (empty($ids)) {
             return response()->json(['success' => false, 'message' => 'No items selected.'], 400);

@@ -127,10 +127,12 @@
     // Avatar
     document.getElementById('avatarForm').addEventListener('submit', async function(e) {
         e.preventDefault(); clearFieldErrors();
+        var btn = e.target.querySelector('button[type="submit"]');
         var fi = document.getElementById('avatar');
         if (!fi.files.length) {
             document.getElementById('avatar-error').classList.remove('hidden');
             document.getElementById('avatar-error').textContent = 'Please select an image.';
+            setBtnLoading(btn, false);
             return;
         }
         var fd = new FormData(); fd.append('avatar', fi.files[0]); fd.append('_token', csrfToken);
@@ -153,6 +155,7 @@
                 if (d.errors) { for (var k in d.errors) showFieldError(k, d.errors[k]); }
             }
         } catch (err) { showToast('An error occurred.', 'error'); }
+        finally { setBtnLoading(btn, false); }
     });
 
     // Remove Avatar
@@ -180,6 +183,7 @@
     // Settings
     document.getElementById('settingsForm').addEventListener('submit', async function(e) {
         e.preventDefault(); clearFieldErrors();
+        var btn = e.target.querySelector('button[type="submit"]');
         var name = document.getElementById('name').value.trim();
         var email = document.getElementById('email').value.trim();
         try {
@@ -196,11 +200,13 @@
                 if (d.errors) { for (var k in d.errors) showFieldError(k, d.errors[k]); }
             }
         } catch (err) { showToast('An error occurred.', 'error'); }
+        finally { setBtnLoading(btn, false); }
     });
 
     // Password
     document.getElementById('passwordForm').addEventListener('submit', async function(e) {
         e.preventDefault(); clearFieldErrors();
+        var btn = e.target.querySelector('button[type="submit"]');
         try {
             var res = await fetch('{{ route("admin.settings.password") }}', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrfToken, 'X-Requested-With': 'XMLHttpRequest' }, body: JSON.stringify({ current_password: document.getElementById('current_password').value, password: document.getElementById('password').value, password_confirmation: document.getElementById('password_confirmation').value }) });
             var d = await res.json();
@@ -210,6 +216,7 @@
                 if (d.errors) { for (var k in d.errors) showFieldError(k, d.errors[k]); }
             }
         } catch (err) { showToast('An error occurred.', 'error'); }
+        finally { setBtnLoading(btn, false); }
     });
 </script>
 @endpush

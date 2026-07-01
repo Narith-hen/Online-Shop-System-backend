@@ -30,7 +30,7 @@ class ProductController extends Controller
     )]
     public function index(Request $request)
     {
-        $query = Product::with('category')->where('is_active', true);
+        $query = Product::with('category')->withAvg('reviews', 'rating')->withCount('reviews')->where('is_active', true);
 
         if ($request->filled('search')) {
             $search = $request->search;
@@ -118,7 +118,7 @@ class ProductController extends Controller
     )]
     public function show(Product $product)
     {
-        $product->load('category');
+        $product->load('category')->loadAvg('reviews', 'rating')->loadCount('reviews');
         return new ProductResource($product);
     }
 

@@ -8,6 +8,7 @@ use App\Models\Notification;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
 
 class NotificationController extends Controller
 {
@@ -112,12 +113,19 @@ class NotificationController extends Controller
         return view('admin.notifications.show', compact('notification', 'reads'));
     }
 
-    public function destroy(Notification $notification)
+    public function destroy(Request $request, Notification $notification)
     {
+        if (!Hash::check($request->password, auth()->user()->password)) {
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json(['success' => false, 'message' => 'Incorrect password.'], 403);
+            }
+            return back()->with('error', 'Incorrect password.');
+        }
+
         DB::table('notification_reads')->where('notification_id', $notification->id)->delete();
         $notification->delete();
 
-        if (request()->ajax() || request()->wantsJson()) {
+        if ($request->ajax() || $request->wantsJson()) {
             return response()->json(['success' => true, 'message' => 'Notification deleted successfully.']);
         }
 
@@ -126,6 +134,10 @@ class NotificationController extends Controller
 
     public function bulkDestroy(Request $request)
     {
+        if (!Hash::check($request->password, auth()->user()->password)) {
+            return response()->json(['success' => false, 'message' => 'Incorrect password.'], 403);
+        }
+
         $ids = $request->input('ids', []);
         if (empty($ids)) {
             return response()->json(['success' => false, 'message' => 'No items selected.'], 400);

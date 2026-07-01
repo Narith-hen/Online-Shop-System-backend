@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Models\Role;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Hash;
 
 class UserController extends Controller
 {
@@ -118,10 +119,17 @@ class UserController extends Controller
         return redirect()->route('admin.users.show', $user)->with('success', 'User updated successfully.');
     }
 
-    public function destroy(User $user)
+    public function destroy(Request $request, User $user)
     {
+        if (!Hash::check($request->password, auth()->user()->password)) {
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json(['success' => false, 'message' => 'Incorrect password.'], 403);
+            }
+            return back()->with('error', 'Incorrect password.');
+        }
+
         if ($user->isAdmin()) {
-            if (request()->ajax() || request()->wantsJson()) {
+            if ($request->ajax() || $request->wantsJson()) {
                 return response()->json(['success' => false, 'message' => 'Cannot delete admin users.'], 403);
             }
             return redirect()->route('admin.users.index')->with('error', 'Cannot delete admin users.');
@@ -129,7 +137,7 @@ class UserController extends Controller
 
         $user->delete();
 
-        if (request()->ajax() || request()->wantsJson()) {
+        if ($request->ajax() || $request->wantsJson()) {
             return response()->json(['success' => true, 'message' => 'User deleted successfully.']);
         }
 
@@ -159,6 +167,10 @@ class UserController extends Controller
 
     public function bulkDestroy(Request $request)
     {
+        if (!Hash::check($request->password, auth()->user()->password)) {
+            return response()->json(['success' => false, 'message' => 'Incorrect password.'], 403);
+        }
+
         $ids = $request->input('ids', []);
         if (empty($ids)) {
             return response()->json(['success' => false, 'message' => 'No items selected.'], 400);
