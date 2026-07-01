@@ -121,11 +121,11 @@
                         <tr class="hover:bg-gray-50/80 transition">
                             <td class="py-3 px-4"><input type="checkbox" class="bulk-checkbox rounded border-gray-300" data-id="{{ $product->id }}"></td>
                             <td class="py-3 px-4 text-sm text-gray-500 font-medium">#{{ $products->firstItem() + $loop->index }}</td>
-                            <td class="py-3 px-4">
+                            <td class="py-3 px-4 min-w-[200px] max-w-[300px]">
                                 <div class="flex items-center gap-3">
-                                    <img src="{{ $product->image_url ?? 'https://via.placeholder.com/40x40?text=P' }}" alt="{{ $product->name }}" class="w-10 h-10 rounded-lg object-cover border border-gray-200">
-                                    <div>
-                                        <p class="text-sm font-medium text-gray-900">{{ $product->name }}</p>
+                                    <img src="{{ $product->image_url ?? 'https://via.placeholder.com/40x40?text=P' }}" alt="{{ $product->name }}" class="w-10 h-10 rounded-lg object-cover border border-gray-200 shrink-0">
+                                    <div class="min-w-0">
+                                        <p class="text-sm font-medium text-gray-900 truncate">{{ $product->name }}</p>
                                         <p class="text-xs text-gray-500">ID: #{{ $product->id }}</p>
                                     </div>
                                 </div>
@@ -425,7 +425,7 @@
         var fd = new FormData(document.getElementById('create-form')); fd.append('_token', csrfToken);
         try {
             var res = await fetch('{{ route("admin.products.store") }}', { method: 'POST', headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' }, body: fd });
-            if (res.ok) { closeCreateModal(); showToast('Product created successfully.', 'success'); await refreshTable(); }
+            if (res.ok) { closeCreateModal(); showToast('Product created successfully.', 'success'); adminNavigate(window.location.href); }
             else { var d = await res.json(); showErrors('create-errors', d.errors || { general: [d.message || 'Error'] }); }
         } catch (e) { showErrors('create-errors', { general: ['Network error.'] }); }
     }
@@ -460,7 +460,7 @@
         var fd = new FormData(document.getElementById('edit-form')); fd.append('_method', 'PUT'); fd.append('_token', csrfToken);
         try {
             var res = await fetch('/admin/products/' + editingProdId, { method: 'POST', headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' }, body: fd });
-            if (res.ok) { closeEditModal(); showToast('Product updated successfully.', 'success'); await refreshTable(); }
+            if (res.ok) { closeEditModal(); showToast('Product updated successfully.', 'success'); adminNavigate(window.location.href); }
             else { var d = await res.json(); showErrors('edit-errors', d.errors || { general: [d.message || 'Error'] }); }
         } catch (e) { showErrors('edit-errors', { general: ['Network error.'] }); }
     }

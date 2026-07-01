@@ -49,7 +49,7 @@ class ProductController extends Controller
         }
 
         $perPage = isset($_COOKIE['per_page']) ? min(25, max(5, (int) $_COOKIE['per_page'])) : 10;
-        $products = $query->latest()->paginate($perPage)->appends($request->except('per_page'));
+        $products = $query->latest()->paginate($perPage)->onEachSide(1)->appends($request->except('per_page'));
         $categories = Category::all();
 
         // Stock metrics
@@ -92,7 +92,7 @@ class ProductController extends Controller
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
-            'image_url' => 'nullable|url|max:2048',
+            'image_url' => 'nullable|string|max:2048',
             'price' => 'required|numeric|min:0',
             'stock' => 'required|integer|min:0',
             'category_id' => 'required|exists:categories,id',
@@ -145,7 +145,7 @@ class ProductController extends Controller
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
-            'image_url' => 'nullable|url|max:2048',
+            'image_url' => 'nullable|string|max:2048',
             'price' => 'required|numeric|min:0',
             'stock' => 'required|integer|min:0',
             'category_id' => 'required|exists:categories,id',

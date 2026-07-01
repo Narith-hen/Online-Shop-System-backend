@@ -96,9 +96,9 @@
                         <tr class="hover:bg-gray-50/80 transition">
                             <td class="py-3 px-4"><input type="checkbox" class="bulk-checkbox rounded border-gray-300" data-id="{{ $order->id }}"></td>
                             <td class="py-3 px-4 text-sm text-gray-500 font-medium">#{{ $orders->firstItem() + $loop->index }}</td>
-                            <td class="py-3 px-4 hide-tablet">
-                                <p class="text-sm font-medium text-gray-900">{{ $order->customer_name ?? 'N/A' }}</p>
-                                <p class="text-xs text-gray-500">{{ $order->customer_email ?? '' }}</p>
+                            <td class="py-3 px-4 hide-tablet min-w-[160px] max-w-[220px]">
+                                <p class="text-sm font-medium text-gray-900 truncate">{{ $order->customer_name ?? 'N/A' }}</p>
+                                <p class="text-xs text-gray-500 truncate">{{ $order->customer_email ?? '' }}</p>
                             </td>
                             <td class="py-3 px-4 text-sm font-semibold text-gray-900">${{ number_format($order->total ?? 0, 2) }}</td>
                             <td class="py-3 px-4">

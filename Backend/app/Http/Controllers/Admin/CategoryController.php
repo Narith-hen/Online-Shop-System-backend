@@ -32,7 +32,7 @@ class CategoryController extends Controller
         }
 
         $perPage = isset($_COOKIE['per_page']) ? min(25, max(5, (int) $_COOKIE['per_page'])) : 10;
-        $categories = $query->latest()->paginate($perPage)->appends($request->except('per_page'));
+        $categories = $query->latest()->paginate($perPage)->onEachSide(1)->appends($request->except('per_page'));
         return view('admin.categories.index', compact('categories'));
     }
 

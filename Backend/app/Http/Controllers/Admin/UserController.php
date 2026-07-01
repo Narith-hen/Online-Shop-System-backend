@@ -33,7 +33,7 @@ class UserController extends Controller
         }
 
         $perPage = isset($_COOKIE['per_page']) ? min(25, max(5, (int) $_COOKIE['per_page'])) : 10;
-        $users = $query->orderBy('code')->paginate($perPage)->appends($request->except('per_page'));
+        $users = $query->orderBy('code')->paginate($perPage)->onEachSide(1)->appends($request->except('per_page'));
         $roles = Role::all();
 
         return view('admin.users.index', compact('users', 'roles'));

@@ -92,16 +92,25 @@
         .card:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
 
         /* ===== Pagination ===== */
-        nav[aria-label="Pagination"] { background: transparent !important; display: flex !important; align-items: center !important; gap: 2px !important; }
+        nav[aria-label="Pagination"] { background: transparent !important; display: flex !important; align-items: center !important; gap: 6px !important; flex-wrap: wrap !important; }
         nav[aria-label="Pagination"] a, nav[aria-label="Pagination"] span {
-            background: #fff !important; color: #6b7280 !important; border: 1px solid #e5e7eb !important; border-radius: 8px !important;
-            transition: all 0.15s !important; font-weight: 500 !important; padding: 6px 14px !important; font-size: 0.85rem !important;
-            min-width: 36px; text-align: center; display: inline-flex; align-items: center; justify-content: center;
+            background: #fff !important; color: #6b7280 !important; border: 1px solid #e5e7eb !important; border-radius: 10px !important;
+            transition: all 0.2s ease !important; font-weight: 500 !important; padding: 8px 16px !important; font-size: 0.85rem !important;
+            min-width: 40px; min-height: 40px; text-align: center; display: inline-flex; align-items: center; justify-content: center;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+            text-decoration: none !important; cursor: pointer;
         }
-        nav[aria-label="Pagination"] a:hover { background: #f9fafb !important; border-color: #d1d5db !important; }
-        nav[aria-label="Pagination"] span[aria-current="page"] { background: #f3f4f6 !important; color: #374151 !important; border-color: #d1d5db !important; font-weight: 600 !important; }
-        nav[aria-label="Pagination"] span[aria-disabled="true"] { opacity: 0.4 !important; cursor: default !important; }
+        nav[aria-label="Pagination"] a:hover { background: #f3f4f6 !important; border-color: #9ca3af !important; box-shadow: 0 2px 6px rgba(0,0,0,0.08); transform: translateY(-1px); }
+        nav[aria-label="Pagination"] a:focus-visible { outline: 2px solid #3b82f6; outline-offset: 2px; }
+        nav[aria-label="Pagination"] span[aria-current="page"] { background: #1f2937 !important; color: #fff !important; border-color: #1f2937 !important; font-weight: 700 !important; box-shadow: 0 2px 8px rgba(31,41,55,0.25) !important; }
+        nav[aria-label="Pagination"] span[aria-disabled="true"] { opacity: 0.35 !important; cursor: not-allowed !important; background: #f9fafb !important; }
         nav[aria-label="Pagination"] svg { display: none !important; }
+        /* Prev/Next distinct style */
+        nav[aria-label="Pagination"] a:first-child, nav[aria-label="Pagination"] a:last-child,
+        nav[aria-label="Pagination"] span:first-child, nav[aria-label="Pagination"] span:last-child {
+            background: #f9fafb !important; color: #374151 !important; font-weight: 600 !important; gap: 4px !important;
+        }
+        nav[aria-label="Pagination"] a:first-child:hover, nav[aria-label="Pagination"] a:last-child:hover { background: #e5e7eb !important; }
 
         /* ===== Toast ===== */
         .toast { position: fixed; bottom: 1.5rem; right: 1.5rem; z-index: 9999; padding: 0.875rem 1.25rem; border-radius: 10px; color: #fff; font-weight: 500; font-size: 0.875rem; box-shadow: 0 10px 30px rgba(0,0,0,0.15); animation: toastIn 0.3s cubic-bezier(0.16, 1, 0.3, 1); display: flex; align-items: center; gap: 0.5rem; max-width: 400px; }
@@ -254,8 +263,8 @@
                             <i class="fas fa-bars text-lg"></i>
                         </button>
                         <div>
-                            <h2 class="text-xl lg:text-2xl font-bold text-gray-900">@yield('page_title', 'Dashboard')</h2>
-                            <p class="text-xs lg:text-sm text-gray-500 mt-0.5">@yield('page_subtitle', 'Welcome to your dashboard')</p>
+                            <h2 id="page-title" class="text-xl lg:text-2xl font-bold text-gray-900">@yield('page_title', 'Dashboard')</h2>
+                            <p id="page-subtitle" class="text-xs lg:text-sm text-gray-500 mt-0.5">@yield('page_subtitle', 'Welcome to your dashboard')</p>
                         </div>
                     </div>
 
@@ -536,6 +545,15 @@
 
                         var title = doc.querySelector('title');
                         if (title) document.title = title.textContent;
+
+                        // Update header title and subtitle
+                        var newTitle = doc.getElementById('page-title');
+                        var newSubtitle = doc.getElementById('page-subtitle');
+                        var curTitle = document.getElementById('page-title');
+                        var curSubtitle = document.getElementById('page-subtitle');
+                        if (newTitle && curTitle) curTitle.innerHTML = newTitle.innerHTML;
+                        if (newSubtitle && curSubtitle) curSubtitle.innerHTML = newSubtitle.innerHTML;
+
                         if (replace) history.replaceState({ url: href }, '', href);
                         else history.pushState({ url: href }, '', href);
 

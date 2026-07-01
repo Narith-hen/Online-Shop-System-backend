@@ -66,22 +66,22 @@
                     <tr class="hover:bg-gray-50/80 transition">
                         <td class="px-4 py-3"><input type="checkbox" class="bulk-checkbox rounded border-gray-300" data-id="{{ $user->id }}"></td>
                         <td class="px-4 py-3 text-sm text-gray-500 font-medium">#{{ $users->firstItem() + $loop->index }}</td>
-                        <td class="px-4 py-3">
+                        <td class="px-4 py-3 min-w-[180px] max-w-[250px]">
                             <div class="flex items-center gap-3">
                                 @if($user->avatar_url)
-                                    <img src="{{ $user->avatar_url }}" alt="{{ $user->name }}" class="w-9 h-9 object-cover rounded-full border border-gray-200">
+                                    <img src="{{ $user->avatar_url }}" alt="{{ $user->name }}" class="w-9 h-9 object-cover rounded-full border border-gray-200 shrink-0">
                                 @elseif($user->provider_avatar)
-                                    <img src="{{ $user->provider_avatar }}" alt="{{ $user->name }}" class="w-9 h-9 object-cover rounded-full border border-gray-200">
+                                    <img src="{{ $user->provider_avatar }}" alt="{{ $user->name }}" class="w-9 h-9 object-cover rounded-full border border-gray-200 shrink-0">
                                 @else
-                                    <div class="w-9 h-9 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center">
+                                    <div class="w-9 h-9 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center shrink-0">
                                         <span class="text-white font-bold text-sm">{{ substr($user->name, 0, 1) }}</span>
                                     </div>
                                 @endif
-                                <span class="font-medium text-gray-800 text-sm">{{ $user->name }}</span>
+                                <span class="font-medium text-gray-800 text-sm truncate">{{ $user->name }}</span>
                             </div>
                         </td>
-                        <td class="px-4 py-3 text-sm text-gray-500 hide-tablet">
-                            {{ $user->email }}
+                        <td class="px-4 py-3 text-sm text-gray-500 hide-tablet min-w-[180px] max-w-[250px]">
+                            <span class="truncate block">{{ $user->email }}</span>
                             @if($user->provider)
                                 <span class="ml-1.5 px-2 py-0.5 text-[10px] bg-gray-100 text-gray-500 rounded-full font-medium">{{ ucfirst($user->provider) }}</span>
                             @endif
@@ -276,7 +276,7 @@
         var fd = new FormData(document.getElementById('create-form')); fd.append('_token', csrfToken);
         try {
             var res = await fetch('{{ route("admin.users.store") }}', { method: 'POST', headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' }, body: fd });
-            if (res.ok) { closeCreateModal(); showToast('User created successfully.', 'success'); await refreshTable(); }
+            if (res.ok) { closeCreateModal(); showToast('User created successfully.', 'success'); adminNavigate(window.location.href); }
             else { var d = await res.json(); showErrors('create-errors', d.errors || { general: [d.message || 'Error'] }); }
         } catch (e) { showErrors('create-errors', { general: ['Network error.'] }); }
     }
@@ -311,7 +311,7 @@
         var fd = new FormData(document.getElementById('edit-form'));
         try {
             var res = await fetch('/admin/users/' + editingUserId, { method: 'POST', headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' }, body: fd });
-            if (res.ok) { closeEditModal(); showToast('User updated successfully.', 'success'); await refreshTable(); }
+            if (res.ok) { closeEditModal(); showToast('User updated successfully.', 'success'); adminNavigate(window.location.href); }
             else { var d = await res.json(); showErrors('edit-errors', d.errors || { general: [d.message || 'Error'] }); }
         } catch (e) { showErrors('edit-errors', { general: ['Network error.'] }); }
     }
@@ -325,7 +325,7 @@
         try {
             var res = await fetch('/admin/users/' + id + '/toggle-block', { method: 'POST', headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json', 'X-CSRF-TOKEN': csrfToken } });
             var d = await res.json();
-            if (d.success) { showToast(d.message, 'success'); await refreshTable(); }
+            if (d.success) { showToast(d.message, 'success'); adminNavigate(window.location.href); }
             else { showToast(d.message || 'Action failed.', 'error'); }
         } catch (e) { showToast('Network error.', 'error'); }
     }

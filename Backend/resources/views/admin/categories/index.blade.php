@@ -68,16 +68,16 @@
                     <tr class="hover:bg-gray-50/80 transition">
                         <td class="px-4 py-3"><input type="checkbox" class="bulk-checkbox rounded border-gray-300" data-id="{{ $category->id }}"></td>
                         <td class="px-4 py-3 text-sm text-gray-500 font-medium">#{{ $categories->firstItem() + $loop->index }}</td>
-                        <td class="px-4 py-3">
+                        <td class="px-4 py-3 min-w-[180px] max-w-[250px]">
                             <div class="flex items-center gap-3">
                                 @if($category->image_url)
-                                    <img src="{{ $category->image_url }}" alt="{{ $category->name }}" class="w-9 h-9 object-cover rounded-lg border border-gray-200">
+                                    <img src="{{ $category->image_url }}" alt="{{ $category->name }}" class="w-9 h-9 object-cover rounded-lg border border-gray-200 shrink-0">
                                 @else
-                                    <div class="w-9 h-9 bg-gray-100 rounded-lg flex items-center justify-center border border-gray-200">
+                                    <div class="w-9 h-9 bg-gray-100 rounded-lg flex items-center justify-center border border-gray-200 shrink-0">
                                         <i class="fas fa-tag text-gray-400 text-sm"></i>
                                     </div>
                                 @endif
-                                <span class="font-medium text-gray-800 text-sm">{{ $category->name }}</span>
+                                <span class="font-medium text-gray-800 text-sm truncate">{{ $category->name }}</span>
                             </div>
                         </td>
                         <td class="px-4 py-3 text-sm text-gray-500 hide-tablet">{{ Str::limit($category->description ?? 'No description', 60) }}</td>
@@ -332,7 +332,7 @@
         var fd = new FormData(document.getElementById('create-form')); fd.append('_token', csrfToken);
         try {
             var res = await fetch('{{ route("admin.categories.store") }}', { method: 'POST', headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' }, body: fd });
-            if (res.ok) { closeCreateModal(); showToast('Category created successfully.', 'success'); await refreshTable(); }
+            if (res.ok) { closeCreateModal(); showToast('Category created successfully.', 'success'); adminNavigate(window.location.href); }
             else { var d = await res.json(); showErrors('create-errors', d.errors || { general: [d.message || 'Error'] }); }
         } catch (e) { showErrors('create-errors', { general: ['Network error.'] }); }
     }
@@ -364,7 +364,7 @@
         var fd = new FormData(document.getElementById('edit-form')); fd.append('_token', csrfToken); fd.append('_method', 'PUT');
         try {
             var res = await fetch('/admin/categories/' + editingCatId, { method: 'POST', headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' }, body: fd });
-            if (res.ok) { closeEditModal(); showToast('Category updated successfully.', 'success'); await refreshTable(); }
+            if (res.ok) { closeEditModal(); showToast('Category updated successfully.', 'success'); adminNavigate(window.location.href); }
             else { var d = await res.json(); showErrors('edit-errors', d.errors || { general: [d.message || 'Error'] }); }
         } catch (e) { showErrors('edit-errors', { general: ['Network error.'] }); }
     }

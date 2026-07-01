@@ -31,7 +31,7 @@ class NotificationController extends Controller
         }
 
         $perPage = isset($_COOKIE['per_page']) ? min(25, max(5, (int) $_COOKIE['per_page'])) : 10;
-        $notifications = $query->latest()->paginate($perPage)->appends($request->except('per_page'));
+        $notifications = $query->latest()->paginate($perPage)->onEachSide(1)->appends($request->except('per_page'));
 
         $totalNotifications = Notification::count();
         $totalReads = DB::table('notification_reads')->count();

@@ -96,11 +96,11 @@
                         <tr class="hover:bg-gray-50/80 transition">
                             <td class="py-3 px-4"><input type="checkbox" class="bulk-checkbox rounded border-gray-300" data-id="{{ $notification->id }}"></td>
                             <td class="py-3 px-4 text-sm text-gray-500 font-medium">#{{ $notification->id }}</td>
-                            <td class="py-3 px-4">
-                                <p class="text-sm font-medium text-gray-900">{{ $notification->title }}</p>
+                            <td class="py-3 px-4 min-w-[180px] max-w-[280px]">
+                                <p class="text-sm font-medium text-gray-900 truncate">{{ $notification->title }}</p>
                             </td>
-                            <td class="py-3 px-4 hide-tablet">
-                                <p class="text-sm text-gray-500 truncate max-w-xs">{{ $notification->message ?? '—' }}</p>
+                            <td class="py-3 px-4 hide-tablet min-w-[200px] max-w-[350px]">
+                                <p class="text-sm text-gray-500 truncate">{{ $notification->message ?? '—' }}</p>
                             </td>
                             <td class="py-3 px-4">
                                 @php

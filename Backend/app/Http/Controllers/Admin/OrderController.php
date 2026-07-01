@@ -50,7 +50,7 @@ class OrderController extends Controller
             $completedOrders = $aggregates->completed_orders;
             $totalRevenue = $aggregates->total_revenue ?? 0;
             $perPage = isset($_COOKIE['per_page']) ? min(25, max(5, (int) $_COOKIE['per_page'])) : 10;
-            $orders = $query->latest()->paginate($perPage)->appends($request->except('per_page'));
+            $orders = $query->latest()->paginate($perPage)->onEachSide(1)->appends($request->except('per_page'));
         }
 
         return view('admin.orders.index', [
